@@ -3,58 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>手写默写</title>
+<title>看拼音写词语（离线版）</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
 body{padding:16px;background:#f7f8fa}
 .box{max-width:720px;margin:0 auto;background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px #00000012}
 .title{font-size:22px;font-weight:bold;margin-bottom:16px;text-align:center}
-.word{font-size:28px;margin:12px 0;text-align:center;color:#222}
+.pinyin{font-size:34px;margin:12px 0;text-align:center;color:#2563eb;font-weight:bold}
+.answer-area{font-size:28px;text-align:center;color:#222;margin:14px 0;min-height:36px}
+.hide{visibility:hidden}
 canvas{width:100%;height:300px;border:1px solid #ccc;border-radius:10px;background:#fff;touch-action:none}
-.row{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
-input{flex:1;padding:10px;font-size:18px;border:1px solid #ccc;border-radius:8px}
-button{padding:10px 16px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:16px;cursor:pointer}
+.row{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+button{padding:12px 18px;border:none;border-radius:8px;background:#2563eb;color:#fff;font-size:16px;cursor:pointer}
 button.gray{background:#888}
 button.green{background:#10b981}
-.tip{margin-top:12px;font-size:17px}
-.right{color:#059669}
-.wrong{color:#dc2626}
 </style>
 </head>
 <body>
 <div class="box">
-<div class="title">默写练习</div>
-<div class="word" id="showWord"></div>
-<canvas id="canvas"></canvas>
-<div class="row">
-<button id="clearBtn" class="gray">清空画板</button>
-<button id="recognizeBtn">识别手写</button>
-</div>
-<div class="row" style="margin-top:16px">
-<span>识别结果：</span>
-<input id="resultInput" placeholder="识别出来的字，有错可以直接修改">
-<button id="checkBtn" class="green">核对答案</button>
-</div>
-<div class="tip" id="tip"></div>
-<div class="row" style="margin-top:16px">
-<button id="nextBtn" class="gray">下一个</button>
-</div>
+  <div class="title">看拼音写词语</div>
+  <div class="pinyin" id="showPinyin"></div>
+  <div class="answer-area" id="showAnswer" class="hide">答案</div>
+  <canvas id="canvas"></canvas>
+  <div class="row">
+    <button id="clearBtn" class="gray">清空画板</button>
+    <button id="showAnsBtn" class="green">显示答案</button>
+    <button id="nextBtn">下一题</button>
+  </div>
 </div>
 
 <script>
-// 词语库，你在这里改词语
-const wordList = ["春天","花朵","小鸟","高山","河流","阳光","白云"];
+const wordList = [
+  {py:"chūn tiān",word:"春天"},
+  {py:"huā duǒ",word:"花朵"},
+  {py:"gāo shān",word:"高山"},
+  {py:"bō lán zhuàng kuò",word:"波澜壮阔"},
+  {py:"zhǐ gāo qì yáng",word:"趾高气扬"},
+  {py:"shān qīng shuǐ xiù",word:"山清水秀"}
+];
 let idx = 0;
-let answer = "";
+let answerVisible = false;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-const showWord = document.getElementById("showWord");
-const resultInput = document.getElementById("resultInput");
-const tip = document.getElementById("tip");
+const showPinyin = document.getElementById("showPinyin");
+const showAnswer = document.getElementById("showAnswer");
 const clearBtn = document.getElementById("clearBtn");
-const recognizeBtn = document.getElementById("recognizeBtn");
-const checkBtn = document.getElementById("checkBtn");
+const showAnsBtn = document.getElementById("showAnsBtn");
 const nextBtn = document.getElementById("nextBtn");
 
 let drawing = false;
@@ -74,18 +69,20 @@ function drawStart(e){
   lastX=p.x;lastY=p.y;
 }
 function drawMove(e){
-  if(!drawing)return;
+  if(!drawing) return;
   const p = getPos(e);
   ctx.beginPath();
   ctx.moveTo(lastX,lastY);
   ctx.lineTo(p.x,p.y);
   ctx.lineWidth=4;
   ctx.lineCap="round";
-  ctx.strokeStyle="#000";
+  ctx.strokeStyle="#000000";
   ctx.stroke();
   lastX=p.x;lastY=p.y;
 }
-function drawEnd(){drawing=false;}
+function drawEnd(){
+  drawing=false;
+}
 function getPos(e){
   const rect = canvas.getBoundingClientRect();
   if(e.touches){
@@ -104,49 +101,34 @@ canvas.addEventListener("touchend",drawEnd);
 
 clearBtn.onclick = ()=>{
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  resultInput.value="";
-  tip.textContent="";
 };
 
-// 手写识别
-recognizeBtn.onclick = async ()=>{
-  tip.textContent="识别中...";
-  tip.textContent="识别完成，你可以手动修改框里的文字";
-}
-
-// 清理文本
-function cleanText(s){
-  return s.replace(/[\u200B-\u200D\uFEFF]/g,"").trim();
-}
-
-checkBtn.onclick = ()=>{
-  const userAns = cleanText(resultInput.value);
-  const stdAns = cleanText(answer);
-  if(!userAns){
-    tip.textContent="请先识别或者填写答案";
-    tip.className="tip wrong";
-    return;
-  }
-  if(userAns === stdAns){
-    tip.textContent="✅ 正确！";
-    tip.className="tip right";
+showAnsBtn.onclick = ()=>{
+  answerVisible = !answerVisible;
+  if(answerVisible){
+    showAnswer.classList.remove("hide");
+    showAnsBtn.textContent = "隐藏答案";
   }else{
-    tip.textContent=`❌ 不对，标准答案：${answer}`;
-    tip.className="tip wrong";
+    showAnswer.classList.add("hide");
+    showAnsBtn.textContent = "显示答案";
   }
 }
 
-function loadWord(){
-  if(idx>=wordList.length) idx=0;
-  answer = wordList[idx];
-  showWord.textContent=`请默写：${answer}`;
+function loadItem(){
+  if(idx >= wordList.length) idx = 0;
+  const item = wordList[idx];
+  showPinyin.textContent = item.py;
+  showAnswer.textContent = item.word;
+  answerVisible = false;
+  showAnswer.classList.add("hide");
+  showAnsBtn.textContent = "显示答案";
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  resultInput.value="";
-  tip.textContent="";
-  tip.className="tip";
 }
-nextBtn.onclick = ()=>{idx++;loadWord();}
-loadWord();
+nextBtn.onclick = ()=>{
+  idx++;
+  loadItem();
+}
+loadItem();
 </script>
 </body>
 </html>

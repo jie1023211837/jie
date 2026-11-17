@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>成人词语默写宝｜画布OCR版</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi5Lq655qE56CB55qE5q2i5aKeIiwic2hvcnRfbmFtZSI6IuW4guS6p+W3peWFtS6p+W3pIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiMy5jY2Y2YifQ==">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+body{background:#f3f4f6;padding:16px;max-width:840px;margin:0 auto}
+.app-box{background:#fff;border-radius:22px;padding:24px;box-shadow:0 4px 22px rgba(0,0,0,0.08)}
+.title{text-align:center;font-size:24px;color:#1f2937;margin-bottom:8px;font-weight:600}
+.subtitle{text-align:center;font-size:13px;color:#6b7280;margin-bottom:18px}
+.tabs{display:flex;gap:6px;margin-bottom:16px}
+.tab{flex:1;text-align:center;padding:10px;background:#e5e7eb;border-radius:10px;font-size:16px}
+.tab.active{background:#2563eb;color:#fff}
+.stat{text-align:center;font-size:16px;color:#374151;margin-bottom:12px}
+.pinyin{font-size:34px;text-align:center;color:#2563eb;font-weight:bold;min-height:50px;margin:16px 0}
+.answer{font-size:28px;text-align:center;color:#111827;min-height:44px;margin:10px 0}
+.hide-answer{color:#ffffff !important}
+.result-tip{text-align:center;font-size:22px;font-weight:bold;margin:10px 0;min-height:32px}
+.right{color:#16a34a}
+.wrong{color:#dc2626}
+.loading{color:#2563eb}
+.info-row{display:flex;justify-content:space-between;color:#555;font-size:15px;margin-bottom:14px}
+.canvas-wrap{border:2px solid #cbd5e1;border-radius:14px;background:#fff;margin:12px 0;overflow:hidden}
+#handCanvas{width:100%;height:220px;touch-action:none}
+.canvas-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.btns-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+button{padding:13px 6px;font-size:16px;border:none;border-radius:11px;color:#fff;background:#2563eb}
+button.gray{background:#6b7280}
+textarea{width:100%;height:170px;padding:10px;font-size:14px;border:1px solid #ddd;border-radius:11px;margin-top:6px}
+.desc{font-size:13px;color:#666;margin-top:10px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="app-box">
+  <div class="title">成人词语默写宝</div>
+  <div class="subtitle">画布手写识别｜需要联网</div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchMode('all')">全部题库</div>
+    <div class="tab" onclick="switchMode('wrong')">错题本</div>
+  </div>
+  <div class="stat">正确率：<span id="rate">0%</span></div>
+  <div class="pinyin" id="pinyin">准备开始练习</div>
+  <div class="answer hide-answer" id="answer">标准答案</div>
+  <div class="result-tip" id="resultTip"></div>
+
+  <div class="canvas-wrap">
+    <canvas id="handCanvas"></canvas>
+  </div>
+  <div class="canvas-btns">
+    <button class="gray" onclick="clearCanvas()">清空画布</button>
+    <button class="gray" onclick="undoStroke()">撤销一笔</button>
+    <button onclick="ocrAndCheck()">识别并判题</button>
+  </div>
+
+  <div class="info-row">
+    <span id="pageInfo">0 / 0</span>
+    <span id="wrongCount">错题：0</span>
+  </div>
+
+  <div class="btns">
+    <button onclick="showAnswer()">查看答案</button>
+    <button class="gray" onclick="prevItem()">上一题</button>
+  </div>
+  <div class="btns-row">
+    <button class="gray" onclick="randomItem()">随机出题</button>
+    <button class="gray" onclick="nextItem()">下一题</button>
+  </div>
+
+  <div class="desc">词库编辑｜格式：词语,拼音 一行一条</div>
+  <textarea id="wordBank"></textarea>
+  <button style="width:100%;margin-top:8px" onclick="loadBank()">刷新词库</button>
+</div>
+
+<script>
+let defaultBank = `裨益,bì yì
+编纂,biān zuǎn
+摒弃,bìng qì
+哺育,bǔ yù
+徜徉,cháng yáng
+嗔怪,chēn guài
+驰骋,chí chěng
+踌躇,chóu chú
+磋商,cuō shāng
+砥砺,dǐ lì
+端倪,duān ní
+讹诈,é zhà
+斐然,fěi rán
+拂晓,fú xiǎo
+桎梏,zhì gù
+粗犷,cū guǎng
+晦涩,huì sè
+觊觎,jì yú
+镌刻,juān kè
+恪守,kè shǒu
+莅临,lì lín
+遴选,lín xuǎn
+牟取,móu qǔ
+毗邻,pí lín
+商榷,shāng què
+翔实,xiáng shí
+翌日,yì rì
+隽永,juàn yǒng
+缜密,zhěn mì
+甄别,zhēn bié
+谆谆,zhūn zhūn
+擢升,zhuó shēng
+斡旋,wò xuán
+诙谐,huī xié
+豁免,huò miǎn
+缄默,jiān mò
+诘责,jié zé
+菁华,jīng huá
+伉俪,kàng lì
+犒劳,kào láo
+羸弱,léi ruò
+耄耋,mào dié
+泯灭,mǐn miè
+匿名,nì míng
+癖好,pǐ hào
+蹊跷,qī qiāo
+耆宿,qí sù
+惬意,qiè yì
+祛除,qū chú
+冗杂,rǒng zá
+赡养,shàn yǎng
+夙愿,sù yuàn
+荼毒,tú dú
+肄业,yì yè
+造诣,zào yì
+佐证,zuǒ zhèng
+安之若素,ān zhī ruò sù
+稗官野史,bài guān yě shǐ
+鞭辟入里,biān pì rù lǐ
+博闻强识,bó wén qiáng zhì
+不胫而走,bù jìng ér zǒu
+不落窠臼,bù luò kē jiù
+沧海桑田,cāng hǎi sāng tián
+差强人意,chā qiáng rén yì
+惩前毖后,chéng qián bì hòu
+殚精竭虑,dān jīng jié lǜ
+方兴未艾,fāng xīng wèi ài
+斐然成章,fěi rán chéng zhāng
+刚愎自用,gāng bì zì yòng
+功亏一篑,gōng kuī yī kuì
+管中窥豹,guǎn zhōng kuī bào
+讳疾忌医,huì jí jì yī
+积重难返,jī zhòng nán fǎn
+集腋成裘,jí yè chéng qiú
+间不容发,jiān bù róng fà
+矫揉造作,jiǎo róu zào zuò
+噤若寒蝉,jìn ruò hán chán
+侃侃而谈,kǎn kǎn ér tán
+空穴来风,kōng xué lái fēng
+苦心孤诣,kǔ xīn gū yì
+良莠不齐,liáng yǒu bù qí
+鳞次栉比,lín cì zhì bǐ
+否极泰来,pǐ jí tài lái
+璞玉浑金,pú yù hún jīn
+罄竹难书,qìng zhú nán shū
+趋之若鹜,qū zhī ruò wù
+拾人牙慧,shí rén yá huì
+醍醐灌顶,tí hú guàn dǐng
+未雨绸缪,wèi yǔ chóu móu
+瑕不掩瑜,xiá bù yǎn yú
+宵衣旰食,xiāo yī gàn shí
+一蹴而就,yī cù ér jiù
+饮鸩止渴,yǐn zhèn zhǐ kě
+振聋发聩,zhèn lóng fā kuì
+栉风沐雨,zhì fēng mù yǔ
+卓尔不群,zhuó ěr bù qún
+作茧自缚,zuò jiǎn zì fù`;
+
+const canvas = document.getElementById('handCanvas');
+const ctx = canvas.getContext('2d');
+let strokes = [];
+let currentStroke = [];
+let isDrawing = false;
+function resizeCanvas(){
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+}
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return {x:t.clientX - rect.left, y:t.clientY - rect.top};
+}
+function drawStroke(stroke){
+  ctx.beginPath();
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=4;ctx.strokeStyle='#111';
+  for(let i=0;i<stroke.length;i++){
+    const p = stroke[i];
+    if(i===0) ctx.moveTo(p.x,p.y);
+    else ctx.lineTo(p.x,p.y);
+  }
+  ctx.stroke();
+}
+function redrawAll(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  strokes.forEach(s=>drawStroke(s));
+}
+canvas.addEventListener('pointerdown',e=>{e.preventDefault();isDrawing=true;currentStroke=[getPos(e)]});
+canvas.addEventListener('pointermove',e=>{if(!isDrawing)return;e.preventDefault();currentStroke.push(getPos(e));redrawAll();drawStroke(currentStroke);});
+canvas.addEventListener('pointerup',()=>{if(isDrawing){isDrawing=false;strokes.push([...currentStroke]);currentStroke=[];}});
+canvas.addEventListener('pointercancel',()=>{isDrawing=false;currentStroke=[]});
+
+function clearCanvas(){ strokes=[];currentStroke=[];redrawAll();resultTip.innerText=''; }
+function undoStroke(){ if(strokes.length>0) strokes.pop(); redrawAll(); }
+
+async function ocrAndCheck(){
+  const item = getNowList()[currentIndex];
+  if(!item) return;
+  resultTip.innerText = "识别中...";
+  resultTip.className = "result-tip loading";
+  try{
+    const base64 = canvas.toDataURL('image/png');
+    const formData = new FormData();
+    formData.append('base64Image', base64);
+    formData.append('apikey', 'K898921748895719');
+    formData.append('language', 'chs');
+    const res = await fetch("https://api.ocr.space/parse/image",{method:"POST",body:formData});
+    const data = await res.json();
+    let text = "";
+    if(!data.IsErroredOnProcessing && data.ParsedResults && data.ParsedResults[0]){
+      text = data.ParsedResults[0].ParsedText.replace(/[\s\n]/g,"");
+    }
+    const std = item.word.trim();
+    if(text === std){
+      resultTip.innerText = `✅ 识别：${text}，正确`;
+      resultTip.className = "result-tip right";
+      totalTry++;rightNum++;
+      if(mode==='wrong'){
+        const idx = wrongList.findIndex(x=>x.word===item.word&&x.py===item.py);
+        if(idx>=0){wrongList.splice(idx);saveWrong();}
+      }
+    }else{
+      resultTip.innerText = `❌ 识别：${text}，标准答案：${std}`;
+      resultTip.className = "result-tip wrong";
+      totalTry++;
+      const has = wrongList.some(x=>x.word===item.word&&x.py===item.py);
+      if(!has){wrongList.push(item);saveWrong();}
+    }
+    render();
+  }catch(err){
+    resultTip.innerText = "识别失败，请检查网络、写工整一点";
+    resultTip.className = "result-tip wrong";
+  }
+}
+
+let bank = [];
+let wrongList = JSON.parse(localStorage.getItem('wrongWordsAdult') || '[]');
+let currentIndex = 0;
+let mode = 'all';
+let rightNum = 0;
+let totalTry = 0;
+
+const pinyinDom = document.getElementById('pinyin');
+const answerDom = document.getElementById('answer');
+const pageInfoDom = document.getElementById('pageInfo');
+const wrongCountDom = document.getElementById('wrongCount');
+const rateDom = document.getElementById('rate');
+const bankTextarea = document.getElementById('wordBank');
+const resultTip = document.getElementById('resultTip');
+
+function loadBank(){
+  const text = bankTextarea.value.trim();
+  bank = [];
+  const lines = text.split('\n');
+  for(let line of lines){
+    const l = line.trim();
+    if(!l) continue;
+    const sp = l.split(',');
+    if(sp.length >=2){
+      bank.push({word: sp[0].trim(), py: sp[1].trim()})
+    }
+  }
+  currentIndex = 0;
+  clearCanvas();
+  render();
+}
+function getNowList(){ return mode === 'wrong' ? wrongList : bank; }
+
+function render(){
+  const list = getNowList();
+  if(list.length === 0){
+    pinyinDom.innerText = "题库为空，请粘贴词语库";
+    answerDom.innerText = "";
+    pageInfoDom.innerText = "0/0";
+    return;
+  }
+  if(currentIndex >= list.length) currentIndex = list.length -1;
+  if(currentIndex <0) currentIndex =0;
+  const item = list[currentIndex];
+  pinyinDom.innerText = item.py;
+  answerDom.innerText = item.word;
+  answerDom.classList.add('hide-answer');
+  pageInfoDom.innerText = `${currentIndex+1} / ${list.length}`;
+  wrongCountDom.innerText = `错题：${wrongList.length}`;
+  rateDom.innerText = totalTry>0 ? Math.round(rightNum / totalTry *100)+'%' : '0%';
+  clearCanvas();
+}
+
+function showAnswer(){ answerDom.classList.remove('hide-answer'); }
+function nextItem(){ const list = getNowList(); if(currentIndex < list.length -1) currentIndex++; render(); }
+function prevItem(){ if(currentIndex >0) currentIndex--; render(); }
+function randomItem(){ const list = getNowList(); if(list.length ===0) return; currentIndex = Math.floor(Math.random() * list.length); render(); }
+function saveWrong(){ localStorage.setItem('wrongWordsAdult', JSON.stringify(wrongList)); }
+function switchMode(m){ mode = m; currentIndex =0; document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('active', (m==='all' && i===0) || (m==='wrong' && i===1));});render();}
+
+bankTextarea.value = defaultBank;
+loadBank();
+</script>
+</body>
+</html>

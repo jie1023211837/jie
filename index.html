@@ -3,15 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>看拼音写词语（本地持久错题版）</title>
+<title>看拼音写词语（错题可刷题｜释义固定显示）</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
 body{padding:16px;background:#f7f8fa}
 .box{max-width:760px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 12px #00000018}
-.title{font-size:24px;font-weight:bold;margin-bottom:20px;text-align:center}
-.pinyin{font-size:36px;margin:14px 0;text-align:center;color:#2563eb;font-weight:bold}
+.mode-tip{font-size:16px;color:#2563eb;text-align:center;margin-bottom:12px;font-weight:bold}
+.title{font-size:24px;font-weight:bold;margin-bottom:12px;text-align:center}
+.pinyin{font-size:36px;margin:8px 0;text-align:center;color:#2563eb;font-weight:bold}
+.explain-area{font-size:17px;color:#444;text-align:center;margin:8px 0;padding:0 10px}
 .answer-area{font-size:28px;text-align:center;color:#222;margin:12px 0;min-height:38px}
-.explain-area{font-size:17px;color:#444;text-align:center;margin:12px 0;min-height:24px;padding:0 10px}
 .hide{visibility:hidden}
 canvas{width:100%;height:320px;border:1px solid #ccc;border-radius:12px;background:#fff;touch-action:none;margin:12px 0}
 .row{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
@@ -29,25 +30,27 @@ button.purple{background:#9333ea}
 .modal-title{font-size:20px;font-weight:bold;margin-bottom:16px;text-align:center}
 .item-line{padding:8px 4px;border-bottom:1px solid #eee;font-size:15px}
 .close-btn{display:block;margin:16px auto 0;padding:10px 20px;background:#666;color:#fff;border-radius:8px;border:none}
+.start-wrong-btn{display:block;margin:12px auto 0;padding:10px 20px;background:#e53e3e;color:#fff;border-radius:8px;border:none;font-weight:bold}
 </style>
 </head>
 <body>
 <div class="box">
+  <div class="mode-tip" id="modeTip">当前模式：全部题库</div>
   <div class="title">看拼音写词语</div>
   <div class="pinyin" id="showPinyin"></div>
+  <div class="explain-area" id="showExplain"></div>
   <div class="answer-area" id="showAnswer" class="hide">答案</div>
-  <div class="explain-area" id="showExplain" class="hide">释义</div>
   <canvas id="canvas"></canvas>
   <div class="row">
     <button id="clearBtn" class="gray">清空画板</button>
     <button id="showAnsBtn" class="green">显示答案</button>
-    <button id="showExpBtn" class="blue">查看释义</button>
     <button id="addWrongBtn" class="red">加入错题</button>
     <button id="prevBtn" class="gray">上一题</button>
     <button id="nextBtn">下一题</button>
     <button id="allLibBtn" class="orange">题库</button>
     <button id="wrongBtn" class="red">错题本</button>
     <button id="clearWrongBtn" class="purple">清空全部错题</button>
+    <button id="backAllBtn" class="blue">返回全部题库</button>
   </div>
 </div>
 
@@ -64,6 +67,7 @@ button.purple{background:#9333ea}
   <div class="modal-content">
     <div class="modal-title">错题本（永久保存）</div>
     <div id="wrongList"></div>
+    <button class="start-wrong-btn" onclick="startWrongPractice()">开始错题练习</button>
     <button class="close-btn" onclick="closeModal('wrongModal')">关闭</button>
   </div>
 </div>
@@ -78,27 +82,28 @@ const wordList = [
   {py:"zhǐ gāo qì yáng",word:"趾高气扬",explain:"形容骄傲自满，得意忘形的样子。"},
   {py:"shān qīng shuǐ xiù",word:"山清水秀",explain:"山水风景优美。"}
 ];
-// 从本地存储读取错题，没有就为空数组
+// 本地持久错题
 let wrongList = JSON.parse(localStorage.getItem("wrongWordList")) || [];
 let idx = 0;
-let sourceList = wordList; // 当前刷题源，默认全部题库
+let sourceList = wordList; // 当前刷题源
+let isWrongMode = false;
 let answerVisible = false;
-let expVisible = false;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const showPinyin = document.getElementById("showPinyin");
 const showAnswer = document.getElementById("showAnswer");
 const showExplain = document.getElementById("showExplain");
+const modeTip = document.getElementById("modeTip");
 const clearBtn = document.getElementById("clearBtn");
 const showAnsBtn = document.getElementById("showAnsBtn");
-const showExpBtn = document.getElementById("showExpBtn");
 const addWrongBtn = document.getElementById("addWrongBtn");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const allLibBtn = document.getElementById("allLibBtn");
 const wrongBtn = document.getElementById("wrongBtn");
 const clearWrongBtn = document.getElementById("clearWrongBtn");
+const backAllBtn = document.getElementById("backAllBtn");
 const libModal = document.getElementById("libModal");
 const wrongModal = document.getElementById("wrongModal");
 const libList = document.getElementById("libList");
@@ -151,7 +156,6 @@ canvas.addEventListener("touchstart",drawStart);
 canvas.addEventListener("touchmove",drawMove);
 canvas.addEventListener("touchend",drawEnd);
 
-// 只有这个按钮手动清空画板，切换题目自动清空
 clearBtn.onclick = ()=>{
   ctx.clearRect(0,0,canvas.width,canvas.height);
 };
@@ -166,16 +170,6 @@ showAnsBtn.onclick = ()=>{
     showAnsBtn.textContent = "显示答案";
   }
 }
-showExpBtn.onclick = ()=>{
-  expVisible = !expVisible;
-  if(expVisible){
-    showExplain.classList.remove("hide");
-    showExpBtn.textContent = "隐藏释义";
-  }else{
-    showExplain.classList.add("hide");
-    showExpBtn.textContent = "查看释义";
-  }
-}
 
 addWrongBtn.onclick = ()=>{
   const cur = sourceList[idx];
@@ -184,18 +178,43 @@ addWrongBtn.onclick = ()=>{
     return;
   }
   wrongList.push(cur);
-  // 保存到本地存储
   localStorage.setItem("wrongWordList", JSON.stringify(wrongList));
   alert("加入错题成功！已本地保存");
 }
 
-// 清空全部错题
 clearWrongBtn.onclick = ()=>{
   if(confirm("确定清空所有错题吗？无法恢复！")){
     wrongList = [];
     localStorage.removeItem("wrongWordList");
     alert("错题本已清空");
+    // 如果正在错题模式，自动切回全部题库
+    if(isWrongMode){
+      switchToAll();
+    }
   }
+}
+
+// 返回全部题库
+backAllBtn.onclick = switchToAll;
+function switchToAll(){
+  isWrongMode = false;
+  sourceList = wordList;
+  modeTip.innerText = "当前模式：全部题库";
+  idx = 0;
+  loadItem();
+}
+// 开始错题练习
+function startWrongPractice(){
+  if(wrongList.length <= 0){
+    alert("错题本为空，无法练习！");
+    return;
+  }
+  closeModal("wrongModal");
+  isWrongMode = true;
+  sourceList = wrongList;
+  modeTip.innerText = "当前模式：错题复习";
+  idx = 0;
+  loadItem();
 }
 
 prevBtn.onclick = ()=>{
@@ -213,14 +232,11 @@ function loadItem(){
   if(sourceList.length ===0) return;
   const item = sourceList[idx];
   showPinyin.textContent = item.py;
-  showAnswer.textContent = item.word;
   showExplain.textContent = item.explain;
+  showAnswer.textContent = item.word;
   answerVisible = false;
   showAnswer.classList.add("hide");
   showAnsBtn.textContent = "显示答案";
-  expVisible = false;
-  showExplain.classList.add("hide");
-  showExpBtn.textContent = "查看释义";
   // 切换题目自动清空画板
   ctx.clearRect(0,0,canvas.width,canvas.height);
 }

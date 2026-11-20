@@ -2,66 +2,66 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>看拼音写词语（错题可刷题｜释义固定显示）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>词语默写本</title>
+<script src="wordlib.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif}
-body{padding:16px;background:#f7f8fa}
-.box{max-width:760px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 12px #00000018}
-.mode-tip{font-size:16px;color:#2563eb;text-align:center;margin-bottom:12px;font-weight:bold}
-.title{font-size:24px;font-weight:bold;margin-bottom:12px;text-align:center}
-.pinyin{font-size:36px;margin:8px 0;text-align:center;color:#2563eb;font-weight:bold}
-.explain-area{font-size:17px;color:#444;text-align:center;margin:8px 0;padding:0 10px}
-.answer-area{font-size:28px;text-align:center;color:#222;margin:12px 0;min-height:38px}
-.hide{visibility:hidden}
-canvas{width:100%;height:320px;border:1px solid #ccc;border-radius:12px;background:#fff;touch-action:none;margin:12px 0}
-.row{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-button{padding:11px 14px;border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer}
-button.gray{background:#888}
-button.green{background:#10b981}
-button.blue{background:#2563eb}
-button.orange{background:#f28c28}
-button.red{background:#e53e3e}
-button.purple{background:#9333ea}
-
-/* 弹窗样式 */
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;padding:20px}
-.modal-content{background:#fff;border-radius:14px;width:100%;max-width:700px;max-height:80vh;overflow:auto;padding:20px}
-.modal-title{font-size:20px;font-weight:bold;margin-bottom:16px;text-align:center}
-.item-line{padding:8px 4px;border-bottom:1px solid #eee;font-size:15px}
-.close-btn{display:block;margin:16px auto 0;padding:10px 20px;background:#666;color:#fff;border-radius:8px;border:none}
-.start-wrong-btn{display:block;margin:12px auto 0;padding:10px 20px;background:#e53e3e;color:#fff;border-radius:8px;border:none;font-weight:bold}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto}
+body{background:#f7f9fc;padding:16px;color:#222}
+.container{max-width:800px;margin:0 auto}
+.top-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+button{padding:10px 14px;border:none;border-radius:8px;background:#3671d9;color:#fff;font-size:16px}
+button.secondary{background:#666}
+button.wrong-btn{background:#dd4444}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 10px #00000014;margin-bottom:16px}
+.pinyin{font-size:28px;color:#222;margin-bottom:8px;font-weight:bold}
+.explain{font-size:18px;color:#555;margin-bottom:16px}
+.canvas-wrap{border:2px solid #ccc;border-radius:10px;background:#fff;margin-bottom:12px}
+#writeCanvas{width:100%;height:260px;touch-action:none;display:block}
+.answer-area{margin-top:12px}
+.answer-text{font-size:24px;color:#222;display:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;padding:16px;z-index:99}
+.modal-content{background:#fff;border-radius:12px;padding:20px;max-width:720px;width:100%;max-height:85vh;overflow:auto}
+.modal-title{font-size:22px;font-weight:bold;margin-bottom:12px}
+.close-btn{margin-top:12px;background:#888}
+.word-item{padding:8px;border-bottom:1px solid #eee;font-size:16px}
+.nav-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
 </style>
 </head>
 <body>
-<div class="box">
-  <div class="mode-tip" id="modeTip">当前模式：全部题库</div>
-  <div class="title">看拼音写词语</div>
-  <div class="pinyin" id="showPinyin"></div>
-  <div class="explain-area" id="showExplain"></div>
-  <div class="answer-area" id="showAnswer" class="hide">答案</div>
-  <canvas id="canvas"></canvas>
-  <div class="row">
-    <button id="clearBtn" class="gray">清空画板</button>
-    <button id="showAnsBtn" class="green">显示答案</button>
-    <button id="addWrongBtn" class="red">加入错题</button>
-    <button id="prevBtn" class="gray">上一题</button>
-    <button id="nextBtn">下一题</button>
-    <button id="allLibBtn" class="orange">题库</button>
-    <button id="wrongBtn" class="red">错题本</button>
-    <button id="clearWrongBtn" class="purple">清空全部错题</button>
-    <button id="backAllBtn" class="blue">返回全部题库</button>
+<div class="container">
+  <div class="top-bar">
+    <button onclick="showAllWords()">题库</button>
+    <button onclick="openModal('wrongModal')">错题本（永久保存）</button>
+  </div>
+
+  <div class="card">
+    <div class="pinyin" id="pinyinBox"></div>
+    <div class="explain" id="explainBox"></div>
+    <div class="canvas-wrap">
+      <canvas id="writeCanvas"></canvas>
+    </div>
+    <div class="nav-row">
+      <button onclick="prevItem()">上一题</button>
+      <button onclick="nextItem()">下一题</button>
+      <button onclick="clearCanvas()">清空画布</button>
+      <button onclick="toggleAnswer()">查看答案</button>
+    </div>
+    <div class="answer-area">
+      <div class="answer-text" id="answerBox"></div>
+    </div>
   </div>
 </div>
 
-<!-- 题库弹窗 -->
-<div class="modal" id="libModal">
+<!-- 全部题库弹窗 -->
+<div class="modal" id="allModal">
   <div class="modal-content">
-    <div class="modal-title">全部题库</div>
-    <div id="libList"></div>
-    <button class="close-btn" onclick="closeModal('libModal')">关闭</button>
+    <div class="modal-title">全部词语题库</div>
+    <div id="allList"></div>
+    <button class="close-btn" onclick="closeModal('allModal')">关闭</button>
   </div>
 </div>
+
 <!-- 错题弹窗 -->
 <div class="modal" id="wrongModal">
   <div class="modal-content">
@@ -73,208 +73,120 @@ button.purple{background:#9333ea}
 </div>
 
 <script>
-// 词条格式：{py:"拼音",word:"词语",explain:"释义"}
-const wordList = [
-  {py:"chūn tiān",word:"春天",explain:"春季，一年四季的第一个季节。"},
-  {py:"huā duǒ",word:"花朵",explain:"花的总称，已经开放的花。"},
-  {py:"gāo shān",word:"高山",explain:"高大的山峰。"},
-  {py:"bō lán zhuàng kuò",word:"波澜壮阔",explain:"形容水面辽阔，也比喻声势雄壮浩大。"},
-  {py:"zhǐ gāo qì yáng",word:"趾高气扬",explain:"形容骄傲自满，得意忘形的样子。"},
-  {py:"shān qīng shuǐ xiù",word:"山清水秀",explain:"山水风景优美。"}
-];
-// 本地持久错题
-let wrongList = JSON.parse(localStorage.getItem("wrongWordList")) || [];
-let idx = 0;
-let sourceList = wordList; // 当前刷题源
-let isWrongMode = false;
-let answerVisible = false;
-
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const showPinyin = document.getElementById("showPinyin");
-const showAnswer = document.getElementById("showAnswer");
-const showExplain = document.getElementById("showExplain");
-const modeTip = document.getElementById("modeTip");
-const clearBtn = document.getElementById("clearBtn");
-const showAnsBtn = document.getElementById("showAnsBtn");
-const addWrongBtn = document.getElementById("addWrongBtn");
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
-const allLibBtn = document.getElementById("allLibBtn");
-const wrongBtn = document.getElementById("wrongBtn");
-const clearWrongBtn = document.getElementById("clearWrongBtn");
-const backAllBtn = document.getElementById("backAllBtn");
-const libModal = document.getElementById("libModal");
-const wrongModal = document.getElementById("wrongModal");
-const libList = document.getElementById("libList");
-const wrongListDom = document.getElementById("wrongList");
-
-let drawing = false;
-let lastX = 0, lastY = 0;
-
+// 画布
+const canvas = document.getElementById('writeCanvas');
+const ctx = canvas.getContext('2d');
+let isDown = false;
+let lastX=0,lastY=0;
 function resizeCanvas(){
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width;
   canvas.height = rect.height;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.lineWidth=4;
+  ctx.strokeStyle='#111';
 }
 resizeCanvas();
-window.addEventListener("resize",resizeCanvas);
-
-function drawStart(e){
-  drawing=true;
-  const p = getPos(e);
-  lastX=p.x;lastY=p.y;
-}
-function drawMove(e){
-  if(!drawing) return;
-  const p = getPos(e);
+window.addEventListener('resize',resizeCanvas);
+canvas.addEventListener('pointerdown',e=>{
+  isDown=true;
+  const r=canvas.getBoundingClientRect();
+  lastX=e.clientX - r.left;
+  lastY=e.clientY - r.top;
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!isDown)return;
+  const r=canvas.getBoundingClientRect();
+  const x=e.clientX - r.left;
+  const y=e.clientY - r.top;
   ctx.beginPath();
   ctx.moveTo(lastX,lastY);
-  ctx.lineTo(p.x,p.y);
-  ctx.lineWidth=4;
-  ctx.lineCap="round";
-  ctx.strokeStyle="#000000";
+  ctx.lineTo(x,y);
   ctx.stroke();
-  lastX=p.x;lastY=p.y;
-}
-function drawEnd(){
-  drawing=false;
-}
-function getPos(e){
-  const rect = canvas.getBoundingClientRect();
-  if(e.touches){
-    return {x:e.touches[0].clientX-rect.left,y:e.touches[0].clientY-rect.top}
-  }else{
-    return {x:e.clientX-rect.left,y:e.clientY-rect.top}
-  }
-}
-canvas.addEventListener("mousedown",drawStart);
-canvas.addEventListener("mousemove",drawMove);
-canvas.addEventListener("mouseup",drawEnd);
-canvas.addEventListener("mouseleave",drawEnd);
-canvas.addEventListener("touchstart",drawStart);
-canvas.addEventListener("touchmove",drawMove);
-canvas.addEventListener("touchend",drawEnd);
+  lastX=x;lastY=y;
+});
+canvas.addEventListener('pointerup',()=>isDown=false);
+canvas.addEventListener('pointercancel',()=>isDown=false);
+function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
 
-clearBtn.onclick = ()=>{
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-};
+// 做题逻辑
+let wrongList = JSON.parse(localStorage.getItem("wrongWordList")) || [];
+let sourceList = wordList;
+let idx = 0;
+let isWrongMode = false;
+let answerVisible = false;
 
-showAnsBtn.onclick = ()=>{
+function render(){
+  const item = sourceList[idx];
+  document.getElementById('pinyinBox').innerText = item.py;
+  document.getElementById('explainBox').innerText = item.explain;
+  document.getElementById('answerBox').innerText = item.word;
+  if(!answerVisible) document.getElementById('answerBox').style.display='none';
+  clearCanvas();
+}
+function nextItem(){
+  idx = (idx+1) % sourceList.length;
+  answerVisible=false;
+  render();
+}
+function prevItem(){
+  idx = (idx-1 + sourceList.length) % sourceList.length;
+  answerVisible=false;
+  render();
+}
+function toggleAnswer(){
   answerVisible = !answerVisible;
+  document.getElementById('answerBox').style.display = answerVisible ? 'block':'none';
   if(answerVisible){
-    showAnswer.classList.remove("hide");
-    showAnsBtn.textContent = "隐藏答案";
-  }else{
-    showAnswer.classList.add("hide");
-    showAnsBtn.textContent = "显示答案";
-  }
-}
-
-addWrongBtn.onclick = ()=>{
-  const cur = sourceList[idx];
-  if(wrongList.find(x=>x.word === cur.word)){
-    alert("已经在错题本里了！");
-    return;
-  }
-  wrongList.push(cur);
-  localStorage.setItem("wrongWordList", JSON.stringify(wrongList));
-  alert("加入错题成功！已本地保存");
-}
-
-clearWrongBtn.onclick = ()=>{
-  if(confirm("确定清空所有错题吗？无法恢复！")){
-    wrongList = [];
-    localStorage.removeItem("wrongWordList");
-    alert("错题本已清空");
-    // 如果正在错题模式，自动切回全部题库
-    if(isWrongMode){
-      switchToAll();
+    const cur = sourceList[idx];
+    if(!wrongList.find(x=>x.word===cur.word)){
+      wrongList.push(cur);
+      localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
+      refreshWrongList();
     }
   }
 }
 
-// 返回全部题库
-backAllBtn.onclick = switchToAll;
-function switchToAll(){
-  isWrongMode = false;
-  sourceList = wordList;
-  modeTip.innerText = "当前模式：全部题库";
-  idx = 0;
-  loadItem();
-}
-// 开始错题练习
-function startWrongPractice(){
-  if(wrongList.length <= 0){
-    alert("错题本为空，无法练习！");
-    return;
-  }
-  closeModal("wrongModal");
-  isWrongMode = true;
-  sourceList = wrongList;
-  modeTip.innerText = "当前模式：错题复习";
-  idx = 0;
-  loadItem();
-}
+// 弹窗
+function openModal(id){document.getElementById(id).style.display='flex'}
+function closeModal(id){document.getElementById(id).style.display='none'}
 
-prevBtn.onclick = ()=>{
-  idx--;
-  if(idx < 0) idx = sourceList.length -1;
-  loadItem();
-}
-nextBtn.onclick = ()=>{
-  idx++;
-  if(idx >= sourceList.length) idx = 0;
-  loadItem();
-}
-
-function loadItem(){
-  if(sourceList.length ===0) return;
-  const item = sourceList[idx];
-  showPinyin.textContent = item.py;
-  showExplain.textContent = item.explain;
-  showAnswer.textContent = item.word;
-  answerVisible = false;
-  showAnswer.classList.add("hide");
-  showAnsBtn.textContent = "显示答案";
-  // 切换题目自动清空画板
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-}
-
-function openModal(id){
-  document.getElementById(id).style.display = "flex";
-}
-function closeModal(id){
-  document.getElementById(id).style.display = "none";
-}
-
-allLibBtn.onclick = ()=>{
-  libList.innerHTML = "";
-  wordList.forEach(item=>{
-    const div = document.createElement("div");
-    div.className = "item-line";
-    div.innerText = `${item.py}｜${item.word}：${item.explain}`;
-    libList.appendChild(div);
+// 题库
+function showAllWords(){
+  const wrap=document.getElementById('allList');
+  wrap.innerHTML='';
+  wordList.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='word-item';
+    d.innerText = `${it.py} ｜ ${it.word} ｜ ${it.explain}`;
+    wrap.appendChild(d);
   })
-  openModal("libModal");
+  openModal('allModal');
 }
 
-wrongBtn.onclick = ()=>{
-  wrongListDom.innerHTML = "";
-  if(wrongList.length ===0){
-    wrongListDom.innerHTML = "<div style='text-align:center;padding:10px'>暂无错题</div>";
-  }else{
-    wrongList.forEach(item=>{
-      const div = document.createElement("div");
-      div.className = "item-line";
-      div.innerText = `${item.py}｜${item.word}：${item.explain}`;
-      wrongListDom.appendChild(div);
-    })
-  }
-  openModal("wrongModal");
+// 错题本
+function refreshWrongList(){
+  const wrap=document.getElementById('wrongList');
+  wrap.innerHTML='';
+  wrongList.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='word-item';
+    d.innerText = `${it.py} ｜ ${it.word} ｜ ${it.explain}`;
+    wrap.appendChild(d);
+  })
 }
-
-loadItem();
+function startWrongPractice(){
+  if(wrongList.length===0){alert("错题本是空的");return}
+  isWrongMode=true;
+  sourceList = [...wrongList];
+  idx=0;
+  answerVisible=false;
+  closeModal('wrongModal');
+  render();
+}
+refreshWrongList();
+render();
 </script>
 </body>
 </html>

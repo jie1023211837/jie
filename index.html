@@ -9,13 +9,14 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto}
 body{background:#f7f9fc;padding:16px;color:#222}
 .container{max-width:800px;margin:0 auto}
-.top-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.top-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
 button{padding:10px 14px;border:none;border-radius:8px;background:#3671d9;color:#fff;font-size:16px}
 button.secondary{background:#666}
 button.wrong-btn{background:#dd4444}
+button:disabled{background:#b0b8c4;cursor:not-allowed}
 .card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 10px #00000014;margin-bottom:16px}
 .pinyin{font-size:28px;color:#222;margin-bottom:8px;font-weight:bold}
-.explain{font-size:18px;color:#555;margin-bottom:16px}
+.explain{font-size:18px;color:#555;margin-bottom:16px;color:#444}
 .canvas-wrap{border:2px solid #ccc;border-radius:10px;background:#fff;margin-bottom:12px}
 #writeCanvas{width:100%;height:260px;touch-action:none;display:block}
 .answer-area{margin-top:12px}
@@ -24,8 +25,9 @@ button.wrong-btn{background:#dd4444}
 .modal-content{background:#fff;border-radius:12px;padding:20px;max-width:720px;width:100%;max-height:85vh;overflow:auto}
 .modal-title{font-size:22px;font-weight:bold;margin-bottom:12px}
 .close-btn{margin-top:12px;background:#888}
-.word-item{padding:8px;border-bottom:1px solid #eee;font-size:16px}
+.word-item{padding:8px;border-bottom:1px solid #eee;font-size:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .nav-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.tip{color:red;font-size:16px;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -33,8 +35,11 @@ button.wrong-btn{background:#dd4444}
   <div class="top-bar">
     <button onclick="showAllWords()">题库</button>
     <button onclick="openModal('wrongModal')">错题本（永久保存）</button>
+    <button id="addWrongBtn" onclick="addCurrentToWrong()">加入错题本</button>
+    <button onclick="resetCurrent()">重新开始</button>
+    <button id="backNormalBtn" onclick="backToNormal()" style="display:none;background:#dd4444">返回题库</button>
   </div>
-
+  <div class="tip" id="loadTip">正在加载词库……</div>
   <div class="card">
     <div class="pinyin" id="pinyinBox"></div>
     <div class="explain" id="explainBox"></div>
@@ -66,6 +71,11 @@ button.wrong-btn{background:#dd4444}
 <div class="modal" id="wrongModal">
   <div class="modal-content">
     <div class="modal-title">错题本（永久保存）</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+      <label><input type="checkbox" id="checkAllWrong"> 全选</label>
+      <button onclick="deleteSelectedWrong()">删除所选</button>
+      <button onclick="clearAllWrong()" class="wrong-btn">清空全部</button>
+    </div>
     <div id="wrongList"></div>
     <button class="start-wrong-btn" onclick="startWrongPractice()">开始错题练习</button>
     <button class="close-btn" onclick="closeModal('wrongModal')">关闭</button>
@@ -112,25 +122,59 @@ function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
 
 // 做题逻辑
 let wrongList = JSON.parse(localStorage.getItem("wrongWordList")) || [];
-let sourceList = wordList;
+let normalIndex = Number(localStorage.getItem("normalIndex")) || 0;
+let wrongIndex = Number(localStorage.getItem("wrongIndex")) || 0;
+let sourceList = [];
 let idx = 0;
 let isWrongMode = false;
 let answerVisible = false;
 
+function init(){
+  if(typeof wordList === "undefined" || !Array.isArray(wordList) || wordList.length ===0){
+    document.getElementById('loadTip').innerText = "❌ 词库加载失败！检查：文件名必须是 wordlib.js，语法不能错";
+    return;
+  }
+  document.getElementById('loadTip').innerText = `✅ 词库加载成功，一共${wordList.length}题`;
+  sourceList = [...wordList];
+  idx = normalIndex;
+  render();
+  refreshWrongList();
+  updateAddWrongBtn();
+  // 全选框事件
+  document.getElementById('checkAllWrong').onchange = function(){
+    const boxes = document.querySelectorAll(".wrong-checkbox");
+    boxes.forEach(b=>b.checked = this.checked);
+  }
+}
+
 function render(){
+  if(sourceList.length ===0) return;
   const item = sourceList[idx];
   document.getElementById('pinyinBox').innerText = item.py;
   document.getElementById('explainBox').innerText = item.explain;
   document.getElementById('answerBox').innerText = item.word;
   if(!answerVisible) document.getElementById('answerBox').style.display='none';
   clearCanvas();
+  updateAddWrongBtn();
+  // 保存对应进度
+  if(isWrongMode){
+    wrongIndex = idx;
+    localStorage.setItem("wrongIndex", wrongIndex);
+  }else{
+    normalIndex = idx;
+    localStorage.setItem("normalIndex", normalIndex);
+  }
+  document.getElementById('backNormalBtn').style.display = isWrongMode ? "inline-block":"none";
 }
+
 function nextItem(){
+  if(sourceList.length===0) return;
   idx = (idx+1) % sourceList.length;
   answerVisible=false;
   render();
 }
 function prevItem(){
+  if(sourceList.length===0) return;
   idx = (idx-1 + sourceList.length) % sourceList.length;
   answerVisible=false;
   render();
@@ -138,14 +182,45 @@ function prevItem(){
 function toggleAnswer(){
   answerVisible = !answerVisible;
   document.getElementById('answerBox').style.display = answerVisible ? 'block':'none';
-  if(answerVisible){
-    const cur = sourceList[idx];
-    if(!wrongList.find(x=>x.word===cur.word)){
-      wrongList.push(cur);
-      localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
-      refreshWrongList();
-    }
+}
+
+// 手动加入错题本
+function addCurrentToWrong(){
+  const cur = sourceList[idx];
+  const exist = wrongList.find(x=>x.word === cur.word);
+  if(exist) return;
+  wrongList.push(cur);
+  localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
+  refreshWrongList();
+  updateAddWrongBtn();
+}
+function updateAddWrongBtn(){
+  const btn = document.getElementById("addWrongBtn");
+  const cur = sourceList[idx];
+  const exist = wrongList.find(x=>x.word === cur.word);
+  if(exist){
+    btn.innerText = "已在错题本";
+    btn.disabled = true;
+  }else{
+    btn.innerText = "加入错题本";
+    btn.disabled = false;
   }
+}
+
+// 重新开始：当前模式回到第0题
+function resetCurrent(){
+  idx = 0;
+  answerVisible = false;
+  render();
+}
+
+// 从错题模式返回正常题库
+function backToNormal(){
+  isWrongMode = false;
+  sourceList = [...wordList];
+  idx = normalIndex;
+  answerVisible = false;
+  render();
 }
 
 // 弹窗
@@ -165,28 +240,71 @@ function showAllWords(){
   openModal('allModal');
 }
 
-// 错题本
+// 错题本渲染
 function refreshWrongList(){
   const wrap=document.getElementById('wrongList');
   wrap.innerHTML='';
-  wrongList.forEach(it=>{
+  wrongList.forEach((it,pos)=>{
     const d=document.createElement('div');
     d.className='word-item';
-    d.innerText = `${it.py} ｜ ${it.word} ｜ ${it.explain}`;
+    d.innerHTML = `
+      <input type="checkbox" class="wrong-checkbox" data-pos="${pos}">
+      <span>${it.py} ｜ ${it.word} ｜ ${it.explain}</span>
+      <button onclick="deleteOneWrong(${pos})" class="wrong-btn">删除</button>
+    `;
     wrap.appendChild(d);
   })
+  document.getElementById('checkAllWrong').checked = false;
 }
+// 删除单个错题
+function deleteOneWrong(pos){
+  wrongList.splice(pos,1);
+  localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
+  refreshWrongList();
+  // 如果正在错题模式，同步刷新列表
+  if(isWrongMode){
+    sourceList = [...wrongList];
+    if(idx >= sourceList.length) idx = sourceList.length -1;
+    render();
+  }
+}
+// 删除选中
+function deleteSelectedWrong(){
+  const boxes = Array.from(document.querySelectorAll(".wrong-checkbox"));
+  const selectedPos = boxes.filter(b=>b.checked).map(b=>Number(b.dataset.pos)).sort((a,b)=>b-a);
+  selectedPos.forEach(p=>wrongList.splice(p,1));
+  localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
+  refreshWrongList();
+  if(isWrongMode){
+    sourceList = [...wrongList];
+    if(idx >= sourceList.length) idx = sourceList.length -1;
+    render();
+  }
+}
+// 清空全部错题
+function clearAllWrong(){
+  if(!confirm("确定清空全部错题吗？"))return;
+  wrongList = [];
+  localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
+  refreshWrongList();
+  if(isWrongMode){
+    sourceList = [...wrongList];
+    idx=0;
+    render();
+  }
+}
+
+// 错题练习
 function startWrongPractice(){
   if(wrongList.length===0){alert("错题本是空的");return}
   isWrongMode=true;
   sourceList = [...wrongList];
-  idx=0;
+  idx = wrongIndex;
   answerVisible=false;
   closeModal('wrongModal');
   render();
 }
-refreshWrongList();
-render();
+window.onload = init;
 </script>
 </body>
 </html>

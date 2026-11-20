@@ -1,4 +1,4 @@
-const wordList = [
+const wordlist = [
 {py:"āi shāng",word:"哀伤",explain:"悲痛忧伤。"},
 {py:"ái fá",word:"挨罚",explain:"受到处罚。"},
 {py:"ài guó",word:"爱国",explain:"热爱自己的祖国。"},

@@ -102,7 +102,7 @@ const wordlist = [
 {py:"cóng cǐ",word:"从此",explain:"从这个时候开始。"},
 {py:"cū cāo",word:"粗糙",explain:"不光滑，不精细。"},
 {py:"cù jìn",word:"促进",explain:"推动发展。"},
-{py:"cuò wù",word:"错误",explain:"不对、有差错。"}
+{py:"cuò wù",word:"错误",explain:"不对、有差错。"},
 {py:"dā yìng",word:"答应",explain:"同意、应允。"},
 {py:"dà gài",word:"大概",explain:"大致、差不多。"},
 {py:"dà jiā",word:"大家",explain:"所有人。"},

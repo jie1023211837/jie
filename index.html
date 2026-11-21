@@ -127,10 +127,12 @@ canvas{
         <span class="close" onclick="closeWrongBook()">×</span>
       </div>
     </div>
+    <div class="tool-row"><button class="btn mini-del" onclick="clearAllWrong()">清空全部</button></div>
     <div id="wrongList"></div>
+    <!-- ✅ 就加在这里！上面是 <div id="wrongList"></div>，下面放按钮代码 -->
+    <div style="margin-top:12px"><button class="btn btn-blue" onclick="startWrongPractice()">开始错题练习</button></div>
   </div>
 </div>
-
 <script src="wordlib.js?v=2"></script>
 <script>
 const canvas = document.getElementById('drawCanvas');

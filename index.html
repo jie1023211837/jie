@@ -29,9 +29,9 @@ body{
   margin-bottom:20px;
 }
 .btn{
-  padding:10px 16px;
+  padding:10px 10px 10px 10px;
   border:none;border-radius:99px;
-  font-size:16px;cursor:pointer;
+  font-size:15px;cursor:pointer;
 }
 .btn-blue{background:#4080ff;color:#fff;}
 .btn-gray{background:#c9d8ee;color:#666;cursor:not-allowed;}
@@ -41,7 +41,7 @@ body{
   box-shadow:0 2px 12px #00000010;
   text-align:center;
 }
-.pinyin{font-size:64px;font-weight:bold;margin:12px 0 12px;}
+.pinyin{font-size:60px;font-weight:bold;margin:12px 0 10px;}
 .explain{font-size:24px;color:#444;margin-bottom:24px;}
 canvas{
   border: 8px solid #c8d8e8;
@@ -76,7 +76,6 @@ canvas{
 .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .close{font-size:24px;cursor:pointer}
 .item{padding:8px;border-bottom:1px solid #eee}
-.item span{font-size:14px;color:#666}
 .check-row{margin:8px 0}
 </style>
 </head>
@@ -178,32 +177,44 @@ canvas.addEventListener('touchmove',e=>{
 canvas.addEventListener('touchend',()=>isDrawing=false);
 function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
 
-// 兼容新旧存储key，保住你的历史进度和错题
-const KEY_PROGRESS_NEW = "write_progress_idx";
-const KEY_PROGRESS_OLD = "progress_idx";
-const KEY_WRONG_NEW = "write_wrong_list";
-const KEY_WRONG_OLD = "wrong_list";
+// 同时兼容新旧存储key，找回旧进度
+const OLD_KEY_IDX = "progress_idx";
+const OLD_KEY_WRONG = "wrong_list";
+const NEW_KEY_IDX = "write_progress_idx";
+const NEW_KEY_WRONG = "write_wrong_list";
 
-function loadLocal(){
-  let p = localStorage.getItem(KEY_PROGRESS_NEW);
-  if(p===null) p = localStorage.getItem(KEY_PROGRESS_OLD);
-  if(p!==null) currentIdx = parseInt(p);
+function loadLocalData(){
+  let savedIdx = localStorage.getItem(OLD_KEY_IDX);
+  if(savedIdx !== null){
+    currentIdx = parseInt(savedIdx);
+    localStorage.setItem(NEW_KEY_IDX, savedIdx);
+  }else{
+    let nIdx = localStorage.getItem(NEW_KEY_IDX);
+    if(nIdx !== null) currentIdx = parseInt(nIdx);
+  }
 
-  let w = localStorage.getItem(KEY_WRONG_NEW);
-  if(w===null) w = localStorage.getItem(KEY_WRONG_OLD);
-  if(w) wrongList = JSON.parse(w);
+  let savedWrong = localStorage.getItem(OLD_KEY_WRONG);
+  if(savedWrong !== null){
+    wrongList = JSON.parse(savedWrong);
+    localStorage.setItem(NEW_KEY_WRONG, savedWrong);
+  }else{
+    let nWrong = localStorage.getItem(NEW_KEY_WRONG);
+    if(nWrong) wrongList = JSON.parse(nWrong);
+  }
 }
 function saveProgress(){
-  localStorage.setItem(KEY_PROGRESS_NEW,currentIdx.toString());
+  localStorage.setItem(NEW_KEY_IDX, currentIdx.toString());
+  localStorage.setItem(OLD_KEY_IDX, currentIdx.toString());
 }
 function saveWrong(){
-  localStorage.setItem(KEY_WRONG_NEW,JSON.stringify(wrongList));
+  const str = JSON.stringify(wrongList);
+  localStorage.setItem(NEW_KEY_WRONG, str);
+  localStorage.setItem(OLD_KEY_WRONG, str);
 }
 
 function updateProgressText(){
   let total = wItemList.length;
-  let done = currentIdx;
-  document.getElementById("progressText").innerText = `总题：${total} ｜ 已完成：${done}`;
+  document.getElementById("progressText").innerText = `总题：${total} ｜ 已完成：${currentIdx}`;
 }
 
 function refreshWrongBtn(){
@@ -222,8 +233,12 @@ function refreshWrongBtn(){
   }
 }
 
+// 渲染：【重点！把拼音、释义、词语全部正常渲染】
 function render(){
   if(wItemList.length===0) return;
+  if(currentIdx >= wItemList.length) currentIdx = wItemList.length -1;
+  if(currentIdx <0) currentIdx =0;
+
   const item = wItemList[currentIdx];
   document.getElementById('pinyinBox').innerText = item.pinyin;
   document.getElementById('explainBox').innerText = item.explain;
@@ -236,16 +251,15 @@ function render(){
 
 function setNormalMode(){
   mode="normal";
-  // 适配你wordlib.js里的变量名：wordList
   if(typeof wordList !== "undefined"){
     wItemList = wordList;
   }else if(typeof wordLib !== "undefined"){
     wItemList = wordLib;
   }else{
-    alert("❌ 词库加载失败！检查wordlib.js语法");
+    alert("❌ 词库加载失败！检查wordlib.js");
     wItemList = [];
+    return;
   }
-  loadLocal();
   render();
 }
 function setWrongMode(){
@@ -336,7 +350,9 @@ function delOneWrong(i){
   refreshWrongBtn();
 }
 
+// 加载顺序：先读本地，再加载词库渲染
 window.onload = function(){
+  loadLocalData();
   setNormalMode();
 }
 </script>

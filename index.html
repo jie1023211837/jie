@@ -92,6 +92,7 @@ canvas{
     <button class="btn btn-light" onclick="openLib()">题库</button>
     <button class="btn btn-light" onclick="openWrongBook()">错题本</button>
     <button class="btn btn-light" onclick="resetAll()">重新开始</button>
+    <button class="btn btn-blue" id="backBtn" style="display:none" onclick="backToNormal()">返回题库</button>
   </div>
 
   <div class="card">
@@ -238,6 +239,11 @@ function render(){
   if(wItemList.length===0) return;
   if(currentIdx >= wItemList.length) currentIdx = wItemList.length -1;
   if(currentIdx <0) currentIdx =0;
+  if(mode === "wrong"){
+    document.getElementById('backBtn').style.display = 'inline-block';
+  }else{
+    document.getElementById('backBtn').style.display = 'none';
+  }
 
   const item = wItemList[currentIdx];
   document.getElementById('pinyinBox').innerText = item.py;
@@ -354,6 +360,24 @@ window.onload = function(){
   loadLocalData();
   setNormalMode();
 }
+function startWrongPractice(){
+  if(wrongList.length === 0){
+    alert("错题本是空的");
+    return;
+  }
+  mode = "wrong";
+  wItemList = [...wrongList];
+  currentIdx = 0;
+  closeWrongBook();
+  render();
+}
+function backToNormal(){
+  mode = "normal";
+  wItemList = [...wordList];
+  currentIdx = 0;
+  render();
+}
+ 
 </script>
 </body>
 </html>

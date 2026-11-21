@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>看拼音写词语（成人版）</title>
+<title>词语默写本</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif}
 body{
@@ -83,7 +83,7 @@ canvas{
 <body>
 <div class="box">
   <div class="top-info">
-    <div id="progressText">总题：0 ｜ 已完成：0</div>
+    <div id="progressText">加载中...</div>
   </div>
   <div class="btn-row-1">
     <button class="btn btn-light" onclick="prevItem()">上一题</button>
@@ -139,11 +139,10 @@ const ctx = canvas.getContext('2d');
 let wItemList = [];
 let wrongList = [];
 let currentIdx = 0;
-let mode = "normal"; // normal / wrong
+let mode = "normal";
 let isDrawing = false;
 let lastX=0,lastY=0;
 
-// 画布适配
 function resizeCanvas(){
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width;
@@ -155,7 +154,6 @@ function resizeCanvas(){
 resizeCanvas();
 window.addEventListener('resize',resizeCanvas);
 
-// 画笔
 canvas.addEventListener('touchstart',e=>{
   e.preventDefault();
   isDrawing=true;
@@ -180,33 +178,36 @@ canvas.addEventListener('touchmove',e=>{
 canvas.addEventListener('touchend',()=>isDrawing=false);
 function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
 
-// 本地存储key（和之前完全一样，不会清空你的进度）
-const KEY_PROGRESS = "write_progress_idx";
-const KEY_WRONG = "write_wrong_list";
+// 兼容新旧存储key，保住你的历史进度和错题
+const KEY_PROGRESS_NEW = "write_progress_idx";
+const KEY_PROGRESS_OLD = "progress_idx";
+const KEY_WRONG_NEW = "write_wrong_list";
+const KEY_WRONG_OLD = "wrong_list";
 
-// 加载本地数据
 function loadLocal(){
-  const p = localStorage.getItem(KEY_PROGRESS);
+  let p = localStorage.getItem(KEY_PROGRESS_NEW);
+  if(p===null) p = localStorage.getItem(KEY_PROGRESS_OLD);
   if(p!==null) currentIdx = parseInt(p);
-  const w = localStorage.getItem(KEY_WRONG);
+
+  let w = localStorage.getItem(KEY_WRONG_NEW);
+  if(w===null) w = localStorage.getItem(KEY_WRONG_OLD);
   if(w) wrongList = JSON.parse(w);
 }
 function saveProgress(){
-  localStorage.setItem(KEY_PROGRESS,currentIdx.toString());
+  localStorage.setItem(KEY_PROGRESS_NEW,currentIdx.toString());
 }
 function saveWrong(){
-  localStorage.setItem(KEY_WRONG,JSON.stringify(wrongList));
+  localStorage.setItem(KEY_WRONG_NEW,JSON.stringify(wrongList));
 }
 
-// 更新进度文字
 function updateProgressText(){
   let total = wItemList.length;
   let done = currentIdx;
   document.getElementById("progressText").innerText = `总题：${total} ｜ 已完成：${done}`;
 }
 
-// 更新错题按钮状态【核心】
 function refreshWrongBtn(){
+  if(wItemList.length===0) return;
   const item = wItemList[currentIdx];
   const has = wrongList.some(x=>x.word===item.word && x.pinyin===item.pinyin);
   const btn = document.getElementById("wrongBtn");
@@ -221,7 +222,6 @@ function refreshWrongBtn(){
   }
 }
 
-// 渲染题目
 function render(){
   if(wItemList.length===0) return;
   const item = wItemList[currentIdx];
@@ -234,10 +234,17 @@ function render(){
   refreshWrongBtn();
 }
 
-// 切换模式：正常题库 / 错题模式
 function setNormalMode(){
   mode="normal";
-  wItemList = wordLib;
+  // 适配你wordlib.js里的变量名：wordList
+  if(typeof wordList !== "undefined"){
+    wItemList = wordList;
+  }else if(typeof wordLib !== "undefined"){
+    wItemList = wordLib;
+  }else{
+    alert("❌ 词库加载失败！检查wordlib.js语法");
+    wItemList = [];
+  }
   loadLocal();
   render();
 }
@@ -269,7 +276,6 @@ function backToNormal(){
   setNormalMode();
 }
 
-// 加入错题本（手动点才加）
 function addWrong(){
   const item = wItemList[currentIdx];
   const has = wrongList.some(x=>x.word===item.word && x.pinyin===item.pinyin);
@@ -281,7 +287,6 @@ function addWrong(){
   }
 }
 
-// 重新开始：回到第0题，进度重置
 function resetAll(){
   if(confirm("确定要重新开始？进度回到第一题")){
     currentIdx=0;
@@ -290,18 +295,16 @@ function resetAll(){
   }
 }
 
-// 题库弹窗
 function openLib(){
   const dom = document.getElementById("libList");
   dom.innerHTML="";
-  wordLib.forEach((it,i)=>{
+  wItemList.forEach((it,i)=>{
     dom.innerHTML += `<div class="item"><input type="checkbox" data-idx="${i}"> ${it.pinyin} 【${it.word}】 ${it.explain}</div>`
   })
   document.getElementById("libModal").style.display="flex";
 }
 function closeLib(){document.getElementById("libModal").style.display="none";}
 
-// 错题本弹窗（支持全选、批量删除、单选删除）
 function openWrongBook(){
   const dom = document.getElementById("wrongList");
   dom.innerHTML="";
@@ -334,7 +337,6 @@ function delOneWrong(i){
 }
 
 window.onload = function(){
-  loadLocal();
   setNormalMode();
 }
 </script>

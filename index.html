@@ -141,6 +141,7 @@ const ctx = canvas.getContext('2d');
 let wItemList = [];
 let wrongList = [];
 let currentIdx = 0;
+let normalIndex = 0;  
 let mode = "normal";
 let isDrawing = false;
 let lastX=0,lastY=0;
@@ -253,6 +254,11 @@ function render(){
   clearCanvas();
   updateProgressText();
   refreshWrongBtn();
+  
+  if(mode === "normal"){
+    normalIndex = currentIdx;
+    localStorage.setItem("normalIndex", normalIndex);
+  }
 }
 
 function setNormalMode(){
@@ -374,7 +380,7 @@ function startWrongPractice(){
 function backToNormal(){
   mode = "normal";
   wItemList = [...wordList];
-  currentIdx = 0;
+  currentIdx = normalIndex; // 读取之前保存的进度
   render();
 }
  

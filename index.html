@@ -3,308 +3,340 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>词语默写本</title>
-<script src="wordlib.js"></script>
+<title>看拼音写词语（成人版）</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto}
-body{background:#f7f9fc;padding:16px;color:#222}
-.container{max-width:800px;margin:0 auto}
-.top-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
-button{padding:10px 14px;border:none;border-radius:8px;background:#3671d9;color:#fff;font-size:16px}
-button.secondary{background:#666}
-button.wrong-btn{background:#dd4444}
-button:disabled{background:#b0b8c4;cursor:not-allowed}
-.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 10px #00000014;margin-bottom:16px}
-.pinyin{font-size:28px;color:#222;margin-bottom:8px;font-weight:bold}
-.explain{font-size:18px;color:#555;margin-bottom:16px;color:#444}
-.canvas-wrap{border:2px solid #ccc;border-radius:10px;background:#fff;margin-bottom:12px}
-#writeCanvas{width:100%;height:260px;touch-action:none;display:block}
-.answer-area{margin-top:12px}
-.answer-text{font-size:24px;color:#222;display:none}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;padding:16px;z-index:99}
-.modal-content{background:#fff;border-radius:12px;padding:20px;max-width:720px;width:100%;max-height:85vh;overflow:auto}
-.modal-title{font-size:22px;font-weight:bold;margin-bottom:12px}
-.close-btn{margin-top:12px;background:#888}
-.word-item{padding:8px;border-bottom:1px solid #eee;font-size:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.nav-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
-.tip{color:red;font-size:16px;margin-bottom:10px}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif}
+body{
+  background: #f0f7ff;
+  background-image: radial-gradient(#dcebfa 1px, transparent 1px);
+  background-size: 20px 20px;
+  padding:16px;color:#222
+}
+.box{max-width:800px;margin:0 auto}
+.top-info{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:14px;
+  font-size:18px;
+  color:#333;
+  font-weight:500;
+}
+.btn-row-1{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:20px;
+}
+.btn{
+  padding:10px 16px;
+  border:none;border-radius:99px;
+  font-size:16px;cursor:pointer;
+}
+.btn-blue{background:#4080ff;color:#fff;}
+.btn-gray{background:#c9d8ee;color:#666;cursor:not-allowed;}
+.btn-light{background:#e6f0ff;color:#3366bb;}
+.card{
+  background:#fff;border-radius:20px;padding:24px;
+  box-shadow:0 2px 12px #00000010;
+  text-align:center;
+}
+.pinyin{font-size:64px;font-weight:bold;margin:12px 0 12px;}
+.explain{font-size:24px;color:#444;margin-bottom:24px;}
+canvas{
+  border: 8px solid #c8d8e8;
+  border-radius:16px;
+  background:#fff;
+  width:100%;touch-action:none;
+}
+.btn-row-2{
+  display:flex;
+  gap:16px;
+  margin-top:24px;
+  justify-content:center;
+}
+.btn-empty{
+  background:#fff;
+  border:1px solid #b8c8e0;
+  color:#333;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.btn-back{
+  background:#4080ff;color:#fff;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.answer-area{margin-top:16px;padding:12px;background:#f0f4fa;border-radius:10px;display:none}
+.answer-word{font-size:26px;font-weight:bold;color:#222}
+.modal{position:fixed;inset:0;background:#00000050;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-content{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:700px;max-height:85vh;overflow:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.close{font-size:24px;cursor:pointer}
+.item{padding:8px;border-bottom:1px solid #eee}
+.item span{font-size:14px;color:#666}
+.check-row{margin:8px 0}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="top-bar">
-    <button onclick="showAllWords()">题库</button>
-    <button onclick="openModal('wrongModal')">错题本（永久保存）</button>
-    <button id="addWrongBtn" onclick="addCurrentToWrong()">加入错题本</button>
-    <button onclick="resetCurrent()">重新开始</button>
-    <button id="backNormalBtn" onclick="backToNormal()" style="display:none;background:#dd4444">返回题库</button>
+<div class="box">
+  <div class="top-info">
+    <div id="progressText">总题：0 ｜ 已完成：0</div>
   </div>
-  <div class="tip" id="loadTip">正在加载词库……</div>
+  <div class="btn-row-1">
+    <button class="btn btn-light" onclick="prevItem()">上一题</button>
+    <button class="btn btn-light" onclick="nextItem()">下一题</button>
+    <button class="btn btn-light" onclick="showAnswer()">查看答案</button>
+    <button class="btn btn-blue" id="wrongBtn" onclick="addWrong()">加入错题本</button>
+    <button class="btn btn-light" onclick="openLib()">题库</button>
+    <button class="btn btn-light" onclick="openWrongBook()">错题本</button>
+    <button class="btn btn-light" onclick="resetAll()">重新开始</button>
+  </div>
+
   <div class="card">
     <div class="pinyin" id="pinyinBox"></div>
     <div class="explain" id="explainBox"></div>
-    <div class="canvas-wrap">
-      <canvas id="writeCanvas"></canvas>
+    <canvas id="drawCanvas"></canvas>
+    <div class="btn-row-2">
+      <button class="btn btn-empty" onclick="clearCanvas()">☑ 清空画板</button>
+      <button class="btn btn-back" onclick="backToNormal()">⬅ 返回</button>
     </div>
-    <div class="nav-row">
-      <button onclick="prevItem()">上一题</button>
-      <button onclick="nextItem()">下一题</button>
-      <button onclick="clearCanvas()">清空画布</button>
-      <button onclick="toggleAnswer()">查看答案</button>
-    </div>
-    <div class="answer-area">
-      <div class="answer-text" id="answerBox"></div>
+    <div class="answer-area" id="answerBox">
+      <div>正确词语：<span class="answer-word" id="ansWord"></span></div>
     </div>
   </div>
 </div>
 
-<!-- 全部题库弹窗 -->
-<div class="modal" id="allModal">
+<!-- 题库弹窗 -->
+<div class="modal" id="libModal">
   <div class="modal-content">
-    <div class="modal-title">全部词语题库</div>
-    <div id="allList"></div>
-    <button class="close-btn" onclick="closeModal('allModal')">关闭</button>
+    <div class="modal-head"><h3>全部题库</h3><span class="close" onclick="closeLib()">×</span></div>
+    <div id="libList"></div>
   </div>
 </div>
 
-<!-- 错题弹窗 -->
+<!-- 错题本弹窗 -->
 <div class="modal" id="wrongModal">
   <div class="modal-content">
-    <div class="modal-title">错题本（永久保存）</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
-      <label><input type="checkbox" id="checkAllWrong"> 全选</label>
-      <button onclick="deleteSelectedWrong()">删除所选</button>
-      <button onclick="clearAllWrong()" class="wrong-btn">清空全部</button>
+    <div class="modal-head">
+      <h3>错题本</h3>
+      <div>
+        <button class="btn btn-light" onclick="selectAllWrong()">全选</button>
+        <button class="btn btn-gray" onclick="delSelectedWrong()">删除选中</button>
+        <span class="close" onclick="closeWrongBook()">×</span>
+      </div>
     </div>
     <div id="wrongList"></div>
-    <button class="start-wrong-btn" onclick="startWrongPractice()">开始错题练习</button>
-    <button class="close-btn" onclick="closeModal('wrongModal')">关闭</button>
   </div>
 </div>
 
+<script src="wordlib.js"></script>
 <script>
-// 画布
-const canvas = document.getElementById('writeCanvas');
+const canvas = document.getElementById('drawCanvas');
 const ctx = canvas.getContext('2d');
-let isDown = false;
+let wItemList = [];
+let wrongList = [];
+let currentIdx = 0;
+let mode = "normal"; // normal / wrong
+let isDrawing = false;
 let lastX=0,lastY=0;
+
+// 画布适配
 function resizeCanvas(){
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width;
-  canvas.height = rect.height;
-  ctx.lineCap='round';
-  ctx.lineJoin='round';
+  canvas.height = 320;
   ctx.lineWidth=4;
-  ctx.strokeStyle='#111';
+  ctx.lineCap="round";
+  ctx.strokeStyle="#222";
 }
 resizeCanvas();
 window.addEventListener('resize',resizeCanvas);
-canvas.addEventListener('pointerdown',e=>{
-  isDown=true;
+
+// 画笔
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  isDrawing=true;
+  const t=e.touches[0];
   const r=canvas.getBoundingClientRect();
-  lastX=e.clientX - r.left;
-  lastY=e.clientY - r.top;
-});
-canvas.addEventListener('pointermove',e=>{
-  if(!isDown)return;
+  lastX = t.clientX - r.left;
+  lastY = t.clientY - r.top;
+})
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(!isDrawing)return;
+  const t=e.touches[0];
   const r=canvas.getBoundingClientRect();
-  const x=e.clientX - r.left;
-  const y=e.clientY - r.top;
+  const x = t.clientX - r.left;
+  const y = t.clientY - r.top;
   ctx.beginPath();
   ctx.moveTo(lastX,lastY);
   ctx.lineTo(x,y);
   ctx.stroke();
   lastX=x;lastY=y;
-});
-canvas.addEventListener('pointerup',()=>isDown=false);
-canvas.addEventListener('pointercancel',()=>isDown=false);
+})
+canvas.addEventListener('touchend',()=>isDrawing=false);
 function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
 
-// 做题逻辑
-let wrongList = JSON.parse(localStorage.getItem("wrongWordList")) || [];
-let normalIndex = Number(localStorage.getItem("normalIndex")) || 0;
-let wrongIndex = Number(localStorage.getItem("wrongIndex")) || 0;
-let sourceList = [];
-let idx = 0;
-let isWrongMode = false;
-let answerVisible = false;
+// 本地存储key（和之前完全一样，不会清空你的进度）
+const KEY_PROGRESS = "write_progress_idx";
+const KEY_WRONG = "write_wrong_list";
 
-function init(){
-  if(typeof wordList === "undefined" || !Array.isArray(wordList) || wordList.length ===0){
-    document.getElementById('loadTip').innerText = "❌ 词库加载失败！检查：文件名必须是 wordlib.js，语法不能错";
-    return;
-  }
-  document.getElementById('loadTip').innerText = `✅ 词库加载成功，一共${wordList.length}题`;
-  sourceList = [...wordList];
-  idx = normalIndex;
-  render();
-  refreshWrongList();
-  updateAddWrongBtn();
-  // 全选框事件
-  document.getElementById('checkAllWrong').onchange = function(){
-    const boxes = document.querySelectorAll(".wrong-checkbox");
-    boxes.forEach(b=>b.checked = this.checked);
-  }
+// 加载本地数据
+function loadLocal(){
+  const p = localStorage.getItem(KEY_PROGRESS);
+  if(p!==null) currentIdx = parseInt(p);
+  const w = localStorage.getItem(KEY_WRONG);
+  if(w) wrongList = JSON.parse(w);
+}
+function saveProgress(){
+  localStorage.setItem(KEY_PROGRESS,currentIdx.toString());
+}
+function saveWrong(){
+  localStorage.setItem(KEY_WRONG,JSON.stringify(wrongList));
 }
 
-function render(){
-  if(sourceList.length ===0) return;
-  const item = sourceList[idx];
-  document.getElementById('pinyinBox').innerText = item.py;
-  document.getElementById('explainBox').innerText = item.explain;
-  document.getElementById('answerBox').innerText = item.word;
-  if(!answerVisible) document.getElementById('answerBox').style.display='none';
-  clearCanvas();
-  updateAddWrongBtn();
-  // 保存对应进度
-  if(isWrongMode){
-    wrongIndex = idx;
-    localStorage.setItem("wrongIndex", wrongIndex);
-  }else{
-    normalIndex = idx;
-    localStorage.setItem("normalIndex", normalIndex);
-  }
-  document.getElementById('backNormalBtn').style.display = isWrongMode ? "inline-block":"none";
+// 更新进度文字
+function updateProgressText(){
+  let total = wItemList.length;
+  let done = currentIdx;
+  document.getElementById("progressText").innerText = `总题：${total} ｜ 已完成：${done}`;
 }
 
-function nextItem(){
-  if(sourceList.length===0) return;
-  idx = (idx+1) % sourceList.length;
-  answerVisible=false;
-  render();
-}
-function prevItem(){
-  if(sourceList.length===0) return;
-  idx = (idx-1 + sourceList.length) % sourceList.length;
-  answerVisible=false;
-  render();
-}
-function toggleAnswer(){
-  answerVisible = !answerVisible;
-  document.getElementById('answerBox').style.display = answerVisible ? 'block':'none';
-}
-
-// 手动加入错题本
-function addCurrentToWrong(){
-  const cur = sourceList[idx];
-  const exist = wrongList.find(x=>x.word === cur.word);
-  if(exist) return;
-  wrongList.push(cur);
-  localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
-  refreshWrongList();
-  updateAddWrongBtn();
-}
-function updateAddWrongBtn(){
-  const btn = document.getElementById("addWrongBtn");
-  const cur = sourceList[idx];
-  const exist = wrongList.find(x=>x.word === cur.word);
-  if(exist){
+// 更新错题按钮状态【核心】
+function refreshWrongBtn(){
+  const item = wItemList[currentIdx];
+  const has = wrongList.some(x=>x.word===item.word && x.pinyin===item.pinyin);
+  const btn = document.getElementById("wrongBtn");
+  if(has){
     btn.innerText = "已在错题本";
-    btn.disabled = true;
+    btn.className = "btn btn-gray";
+    btn.onclick = null;
   }else{
     btn.innerText = "加入错题本";
-    btn.disabled = false;
+    btn.className = "btn btn-blue";
+    btn.onclick = addWrong;
   }
 }
 
-// 重新开始：当前模式回到第0题
-function resetCurrent(){
-  idx = 0;
-  answerVisible = false;
+// 渲染题目
+function render(){
+  if(wItemList.length===0) return;
+  const item = wItemList[currentIdx];
+  document.getElementById('pinyinBox').innerText = item.pinyin;
+  document.getElementById('explainBox').innerText = item.explain;
+  document.getElementById('ansWord').innerText = item.word;
+  document.getElementById('answerBox').style.display="none";
+  clearCanvas();
+  updateProgressText();
+  refreshWrongBtn();
+}
+
+// 切换模式：正常题库 / 错题模式
+function setNormalMode(){
+  mode="normal";
+  wItemList = wordLib;
+  loadLocal();
+  render();
+}
+function setWrongMode(){
+  mode="wrong";
+  wItemList = wrongList;
+  currentIdx=0;
   render();
 }
 
-// 从错题模式返回正常题库
+function prevItem(){
+  if(currentIdx>0){
+    currentIdx--;
+    saveProgress();
+    render();
+  }
+}
+function nextItem(){
+  if(currentIdx < wItemList.length-1){
+    currentIdx++;
+    saveProgress();
+    render();
+  }
+}
+function showAnswer(){
+  document.getElementById('answerBox').style.display="block";
+}
 function backToNormal(){
-  isWrongMode = false;
-  sourceList = [...wordList];
-  idx = normalIndex;
-  answerVisible = false;
-  render();
+  setNormalMode();
 }
 
-// 弹窗
-function openModal(id){document.getElementById(id).style.display='flex'}
-function closeModal(id){document.getElementById(id).style.display='none'}
+// 加入错题本（手动点才加）
+function addWrong(){
+  const item = wItemList[currentIdx];
+  const has = wrongList.some(x=>x.word===item.word && x.pinyin===item.pinyin);
+  if(!has){
+    wrongList.push(item);
+    saveWrong();
+    alert("✅ 已加入错题本");
+    refreshWrongBtn();
+  }
+}
 
-// 题库
-function showAllWords(){
-  const wrap=document.getElementById('allList');
-  wrap.innerHTML='';
-  wordList.forEach(it=>{
-    const d=document.createElement('div');
-    d.className='word-item';
-    d.innerText = `${it.py} ｜ ${it.word} ｜ ${it.explain}`;
-    wrap.appendChild(d);
+// 重新开始：回到第0题，进度重置
+function resetAll(){
+  if(confirm("确定要重新开始？进度回到第一题")){
+    currentIdx=0;
+    saveProgress();
+    render();
+  }
+}
+
+// 题库弹窗
+function openLib(){
+  const dom = document.getElementById("libList");
+  dom.innerHTML="";
+  wordLib.forEach((it,i)=>{
+    dom.innerHTML += `<div class="item"><input type="checkbox" data-idx="${i}"> ${it.pinyin} 【${it.word}】 ${it.explain}</div>`
   })
-  openModal('allModal');
+  document.getElementById("libModal").style.display="flex";
 }
+function closeLib(){document.getElementById("libModal").style.display="none";}
 
-// 错题本渲染
-function refreshWrongList(){
-  const wrap=document.getElementById('wrongList');
-  wrap.innerHTML='';
-  wrongList.forEach((it,pos)=>{
-    const d=document.createElement('div');
-    d.className='word-item';
-    d.innerHTML = `
-      <input type="checkbox" class="wrong-checkbox" data-pos="${pos}">
-      <span>${it.py} ｜ ${it.word} ｜ ${it.explain}</span>
-      <button onclick="deleteOneWrong(${pos})" class="wrong-btn">删除</button>
-    `;
-    wrap.appendChild(d);
+// 错题本弹窗（支持全选、批量删除、单选删除）
+function openWrongBook(){
+  const dom = document.getElementById("wrongList");
+  dom.innerHTML="";
+  wrongList.forEach((it,i)=>{
+    dom.innerHTML += `<div class="item check-row">
+      <input type="checkbox" class="wrong-check" data-widx="${i}">
+      ${it.pinyin} 【${it.word}】 ${it.explain}
+      <button class="btn btn-gray" onclick="delOneWrong(${i})">删除</button>
+    </div>`
   })
-  document.getElementById('checkAllWrong').checked = false;
+  document.getElementById("wrongModal").style.display="flex";
 }
-// 删除单个错题
-function deleteOneWrong(pos){
-  wrongList.splice(pos,1);
-  localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
-  refreshWrongList();
-  // 如果正在错题模式，同步刷新列表
-  if(isWrongMode){
-    sourceList = [...wrongList];
-    if(idx >= sourceList.length) idx = sourceList.length -1;
-    render();
-  }
+function closeWrongBook(){document.getElementById("wrongModal").style.display="none";}
+function selectAllWrong(){
+  document.querySelectorAll('.wrong-check').forEach(cb=>cb.checked=true);
 }
-// 删除选中
-function deleteSelectedWrong(){
-  const boxes = Array.from(document.querySelectorAll(".wrong-checkbox"));
-  const selectedPos = boxes.filter(b=>b.checked).map(b=>Number(b.dataset.pos)).sort((a,b)=>b-a);
-  selectedPos.forEach(p=>wrongList.splice(p,1));
-  localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
-  refreshWrongList();
-  if(isWrongMode){
-    sourceList = [...wrongList];
-    if(idx >= sourceList.length) idx = sourceList.length -1;
-    render();
-  }
+function delSelectedWrong(){
+  const cbs = document.querySelectorAll('.wrong-check:checked');
+  const delIdx = Array.from(cbs).map(x=>parseInt(x.dataset.widx)).sort((a,b)=>b-a);
+  delIdx.forEach(i=>wrongList.splice(i,1));
+  saveWrong();
+  openWrongBook();
+  refreshWrongBtn();
 }
-// 清空全部错题
-function clearAllWrong(){
-  if(!confirm("确定清空全部错题吗？"))return;
-  wrongList = [];
-  localStorage.setItem("wrongWordList",JSON.stringify(wrongList));
-  refreshWrongList();
-  if(isWrongMode){
-    sourceList = [...wrongList];
-    idx=0;
-    render();
-  }
+function delOneWrong(i){
+  wrongList.splice(i,1);
+  saveWrong();
+  openWrongBook();
+  refreshWrongBtn();
 }
 
-// 错题练习
-function startWrongPractice(){
-  if(wrongList.length===0){alert("错题本是空的");return}
-  isWrongMode=true;
-  sourceList = [...wrongList];
-  idx = wrongIndex;
-  answerVisible=false;
-  closeModal('wrongModal');
-  render();
+window.onload = function(){
+  loadLocal();
+  setNormalMode();
 }
-window.onload = init;
 </script>
 </body>
 </html>

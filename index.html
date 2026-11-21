@@ -177,7 +177,6 @@ canvas.addEventListener('touchmove',e=>{
 canvas.addEventListener('touchend',()=>isDrawing=false);
 function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
 
-// 同时兼容新旧存储key，找回旧进度
 const OLD_KEY_IDX = "progress_idx";
 const OLD_KEY_WRONG = "wrong_list";
 const NEW_KEY_IDX = "write_progress_idx";
@@ -220,7 +219,7 @@ function updateProgressText(){
 function refreshWrongBtn(){
   if(wItemList.length===0) return;
   const item = wItemList[currentIdx];
-  const has = wrongList.some(x=>x.word===item.word && x.pinyin===item.pinyin);
+  const has = wrongList.some(x=>x.word===item.word && x.py===item.py);
   const btn = document.getElementById("wrongBtn");
   if(has){
     btn.innerText = "已在错题本";
@@ -233,14 +232,13 @@ function refreshWrongBtn(){
   }
 }
 
-// 渲染：【重点！把拼音、释义、词语全部正常渲染】
 function render(){
   if(wItemList.length===0) return;
   if(currentIdx >= wItemList.length) currentIdx = wItemList.length -1;
   if(currentIdx <0) currentIdx =0;
 
   const item = wItemList[currentIdx];
-  document.getElementById('pinyinBox').innerText = item.pinyin;
+  document.getElementById('pinyinBox').innerText = item.py;
   document.getElementById('explainBox').innerText = item.explain;
   document.getElementById('ansWord').innerText = item.word;
   document.getElementById('answerBox').style.display="none";
@@ -292,7 +290,7 @@ function backToNormal(){
 
 function addWrong(){
   const item = wItemList[currentIdx];
-  const has = wrongList.some(x=>x.word===item.word && x.pinyin===item.pinyin);
+  const has = wrongList.some(x=>x.word===item.word && x.py===item.py);
   if(!has){
     wrongList.push(item);
     saveWrong();
@@ -313,7 +311,7 @@ function openLib(){
   const dom = document.getElementById("libList");
   dom.innerHTML="";
   wItemList.forEach((it,i)=>{
-    dom.innerHTML += `<div class="item"><input type="checkbox" data-idx="${i}"> ${it.pinyin} 【${it.word}】 ${it.explain}</div>`
+    dom.innerHTML += `<div class="item"><input type="checkbox" data-idx="${i}"> ${it.py} 【${it.word}】 ${it.explain}</div>`
   })
   document.getElementById("libModal").style.display="flex";
 }
@@ -325,7 +323,7 @@ function openWrongBook(){
   wrongList.forEach((it,i)=>{
     dom.innerHTML += `<div class="item check-row">
       <input type="checkbox" class="wrong-check" data-widx="${i}">
-      ${it.pinyin} 【${it.word}】 ${it.explain}
+      ${it.py} 【${it.word}】 ${it.explain}
       <button class="btn btn-gray" onclick="delOneWrong(${i})">删除</button>
     </div>`
   })
@@ -350,7 +348,6 @@ function delOneWrong(i){
   refreshWrongBtn();
 }
 
-// 加载顺序：先读本地，再加载词库渲染
 window.onload = function(){
   loadLocalData();
   setNormalMode();

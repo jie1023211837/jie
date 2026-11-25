@@ -392,7 +392,33 @@ function backToNormal(){
   render();
 }
 function jumpToItem(){
-  alert("跳转按钮生效了！");
+  const num = Number(document.getElementById("startIdx").value);
+  let list,max;
+  if(mode === "lib"){
+    list = wItemList;
+    max = wItemList.length;
+  }else if(mode === "wrong"){
+    list = errList;
+    max = errList.length;
+  }else{
+    alert("当前模式不支持跳转");
+    return;
+  }
+
+  if(isNaN(num) || num < 1 || num > max){
+    alert(`超出范围！范围：1~${max}`);
+    return;
+  }
+
+  if(mode === "lib"){
+    currentIdx = num - 1;
+    saveLibProgress();
+  }else if(mode === "wrong"){
+    curErrIdx = num - 1;
+    saveErrProgress();
+  }
+  render();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 }
  
 </script>

@@ -392,6 +392,7 @@ function backToNormal(){
   render();
 }
 function jumpToItem(){
+  alert("当前mode：" + mode); // 新增这一行，看真实值
   const num = Number(document.getElementById("startIdx").value);
   let list,max;
   if(mode === "lib"){
@@ -418,7 +419,7 @@ function jumpToItem(){
     saveErrProgress();
   }
   render();
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // 先删掉画板清空那一行，防止ctx报错
 }
  
 </script>

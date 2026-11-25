@@ -392,10 +392,9 @@ function backToNormal(){
   render();
 }
 function jumpToItem(){
-  alert("当前mode：" + mode); // 新增这一行，看真实值
   const num = Number(document.getElementById("startIdx").value);
   let list,max;
-  if(mode === "lib"){
+  if(mode === "normal"){
     list = wItemList;
     max = wItemList.length;
   }else if(mode === "wrong"){
@@ -411,7 +410,7 @@ function jumpToItem(){
     return;
   }
 
-  if(mode === "lib"){
+  if(mode === "normal"){
     currentIdx = num - 1;
     saveLibProgress();
   }else if(mode === "wrong"){
@@ -419,7 +418,6 @@ function jumpToItem(){
     saveErrProgress();
   }
   render();
-  // 先删掉画板清空那一行，防止ctx报错
 }
  
 </script>

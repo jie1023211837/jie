@@ -87,7 +87,7 @@ canvas{
   <span>从第</span>
   <input type="number" id="startIdx" min="1" value="1" style="width:90px;padding:6px">
   <span>条开始</span>
-  <button id="btnStartAt">跳转</button>
+  <button onclick="jumpToItem()">跳转</button>
 </div>
   </div>
   <div class="btn-row-1">
@@ -226,28 +226,6 @@ function updateProgressText(){
   document.getElementById("progressText").innerText = `总题：${total} ｜ 已完成：${currentIdx}`;
   document.getElementById("startIdx").value = currentIdx+1;
 }
-document.getElementById("btnStartAt").onclick = ()=>{
-  const num = Number(document.getElementById("startIdx").value);
-  let list,max;
-  if(mode==="lib"){
-    list=wItemList;max=wItemList.length;
-  }else{
-    list=errList;max=errList.length;
-  }
-  if(isNaN(num)||num<1||num>max){
-    alert("超出范围！范围：1~"+max);
-    return;
-  }
-  if(mode==="lib"){
-    currentIdx = num-1;
-    saveLibProgress();
-  }else{
-    curErrIdx = num-1;
-    saveErrProgress();
-  }
-  render();
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-}
 
 function refreshWrongBtn(){
   if(wItemList.length===0) return;
@@ -288,6 +266,7 @@ function render(){
     normalIndex = currentIdx;
     localStorage.setItem("normalIndex", normalIndex);
   }
+  updateProgressText();
 }
 
 function setNormalMode(){
@@ -411,6 +390,30 @@ function backToNormal(){
   wItemList = [...wordList];
   currentIdx = normalIndex; // 读取之前保存的进度
   render();
+}
+function jumpToItem(){
+  const num = Number(document.getElementById("startIdx").value);
+  let list,max;
+  if(mode==="lib"){
+    list=wItemList;
+    max=wItemList.length;
+  }else if(mode==="wrong"){
+    list=errList;
+    max=errList.length;
+  }
+  if(isNaN(num)||num<1||num>max){
+    alert("超出范围！范围：1~"+max);
+    return;
+  }
+  if(mode==="lib"){
+    currentIdx = num-1;
+    saveLibProgress();
+  }else if(mode==="wrong"){
+    curErrIdx = num-1;
+    saveErrProgress();
+  }
+  render();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 }
  
 </script>

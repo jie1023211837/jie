@@ -392,27 +392,18 @@ function backToNormal(){
 }
 function jumpToItem(){
   const num = Number(document.getElementById("startIdx").value);
-  let list,max;
-  if(mode==="normal"){
-    list=wItemList;
-    max=wItemList.length;
-  }else if(mode==="wrong"){
-    list=errList;
-    max=errList.length;
-  }
-  if(isNaN(num)||num<1||num>max){
-    alert("超出范围！范围：1~"+max);
+  alert("mode="+mode+"，输入="+num);
+  if(mode === "normal"){
+    currentIdx = num - 1;
+    alert("题库模式，新下标："+currentIdx);
+  }else if(mode === "wrong"){
+    curErrIdx = num - 1;
+    alert("错题模式，新下标："+curErrIdx);
+  }else{
+    alert("模式不支持");
     return;
   }
-  if(mode==="normal"){
-    currentIdx = num-1;
-    saveLibProgress();
-  }else if(mode==="wrong"){
-    curErrIdx = num-1;
-    saveErrProgress();
-  }
   render();
-  ctx.clearRect(0,0,canvas.width,canvas.height);
 }
  
 </script>

@@ -94,7 +94,7 @@ canvas{border:8px solid #c8d8e8;border-radius:16px;background:#fff;width:100%;to
 </div>
 
 <!-- 错题本弹窗 -->
-<div class="modal" id="wrongModal">
+<div class="modal" id="wrongModal" onclick="if(event.target===this)closeWrongBook()">
   <div class="modal-content">
     <div class="modal-head">
       <h3>错题本（永久保存）</h3>

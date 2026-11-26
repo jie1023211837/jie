@@ -3,409 +3,404 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>词语默写本</title>
+<title>看拼音写词语默写</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, -apple-system, sans-serif;}
 body{
-  background: #f0f7ff;
-  background-image: radial-gradient(#dcebfa 1px, transparent 1px);
-  background-size: 20px 20px;
-  padding:16px;color:#222
+  background:#f8fbf8;
+  padding:12px;
+  font-size:16px;
 }
-.box{max-width:800px;margin:0 auto}
-.top-info{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:14px;
-  font-size:18px;
-  color:#333;
-  font-weight:500;
-}
-.btn-row-1{
+.title{text-align:center;font-size:22px;font-weight:bold;margin-bottom:12px;color:#222;}
+.info-line{
   display:flex;
   flex-wrap:wrap;
   gap:8px;
-  margin-bottom:20px;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:12px;
+  padding:8px;
+  background:#eef8ee;
+  border-radius:8px;
+}
+.jump-area{
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+.jump-area input{
+  width:70px;
+  padding:4px;
+  font-size:16px;
+  border:1px solid #ccc;
+  border-radius:4px;
 }
 .btn{
-  padding:10px 10px 10px 10px;
-  border:none;border-radius:99px;
-  font-size:15px;cursor:pointer;
+  padding:7px 10px;
+  border:none;
+  border-radius:6px;
+  background:#369;
+  color:#fff;
+  font-size:15px;
 }
-.btn-blue{background:#4080ff;color:#fff;}
-.btn-gray{background:#c9d8ee;color:#666;cursor:not-allowed;}
-.btn-light{background:#e6f0ff;color:#3366bb;}
-.card{
-  background:#fff;border-radius:20px;padding:24px;
-  box-shadow:0 2px 12px #00000010;
-  text-align:center;
-}
-.pinyin{font-size:60px;font-weight:bold;margin:12px 0 10px;}
-.explain{font-size:24px;color:#444;margin-bottom:24px;}
-canvas{
-  border: 8px solid #c8d8e8;
-  border-radius:16px;
-  background:#fff;
-  width:100%;touch-action:none;
-}
-.btn-row-2{
+.btn-group{
   display:flex;
-  gap:16px;
-  margin-top:24px;
+  flex-wrap:wrap;
+  gap:8px;
   justify-content:center;
+  margin:12px 0;
 }
-.btn-empty{
+.btn-warn{background:#d63031;}
+.btn-ok{background:#00b894;}
+.btn-gray{background:#636e72;}
+.card{
   background:#fff;
-  border:1px solid #b8c8e0;
-  color:#333;
+  border-radius:10px;
+  padding:20px;
+  margin:12px 0;
+  box-shadow:0 1px 4px #00000015;
+}
+.py-text{font-size:32px;text-align:center;margin-bottom:10px;color:#222;font-weight:bold;}
+.explain-text{font-size:18px;text-align:center;color:#555;margin-bottom:16px;}
+.answer-text{
+  font-size:34px;
+  text-align:center;
+  color:#0984e3;
+  font-weight:bold;
+  display:none;
+}
+#drawCanvas{
+  width:100%;
+  height:280px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  background:#fff;
+  touch-action:none;
+}
+.wrong-modal{
+  position:fixed;
+  left:0;top:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.55);
+  display:none;
+  padding:16px;
+  overflow:auto;
+}
+.modal-inner{
+  background:#fff;
+  border-radius:10px;
+  padding:16px;
+  max-width:700px;
+  margin:0 auto;
+}
+.wrong-item{
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:8px;
+  padding:8px 0;
+  border-bottom:1px solid #eee;
 }
-.btn-back{
-  background:#4080ff;color:#fff;
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-.answer-area{margin-top:16px;padding:12px;background:#f0f4fa;border-radius:10px;display:none}
-.answer-word{font-size:26px;font-weight:bold;color:#222}
-.modal{position:fixed;inset:0;background:#00000050;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-content{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:700px;max-height:85vh;overflow:auto}
-.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.close{font-size:24px;cursor:pointer}
-.item{padding:8px;border-bottom:1px solid #eee}
-.check-row{margin:8px 0}
 </style>
 </head>
 <body>
-<div class="box">
-  <div class="top-info">
-    <div id="progressText">加载中...</div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-  <span>从第</span>
-  <input type="number" id="startIdx" min="1" value="1" style="width:90px;padding:6px">
-  <span>条开始</span>
-  <button onclick="jumpToItem()">跳转</button>
-</div>
-  </div>
-  <div class="btn-row-1">
-    <button class="btn btn-light" onclick="prevItem()">上一题</button>
-    <button class="btn btn-light" onclick="nextItem()">下一题</button>
-    <button class="btn btn-light" onclick="showAnswer()">查看答案</button>
-    <button class="btn btn-blue" id="wrongBtn" onclick="addWrong()">加入错题本</button>
-    <button class="btn btn-light" onclick="openLib()">题库</button>
-    <button class="btn btn-light" onclick="openWrongBook()">错题本</button>
-    <button class="btn btn-light" onclick="resetAll()">重新开始</button>
-    <button class="btn btn-blue" id="backBtn" style="display:none" onclick="backToNormal()">返回题库</button>
-  </div>
-
-  <div class="card">
-    <div class="pinyin" id="pinyinBox"></div>
-    <div class="explain" id="explainBox"></div>
-    <canvas id="drawCanvas"></canvas>
-    <div class="btn-row-2">
-      <button class="btn btn-empty" onclick="clearCanvas()">☑ 清空画板</button>
-      <button class="btn btn-back" onclick="backToNormal()">⬅ 返回</button>
-    </div>
-    <div class="answer-area" id="answerBox">
-      <div>正确词语：<span class="answer-word" id="ansWord"></span></div>
-    </div>
+<div class="title">看拼音写词语默写</div>
+<div class="info-line">
+  <span id="progressText">总题：0 | 当前：0/0</span>
+  <div class="jump-area">
+    <span>从第</span>
+    <input id="jumpInput" type="number" min="1" value="1">
+    <span>题开始</span>
+    <button class="btn" id="jumpBtn">跳转</button>
   </div>
 </div>
 
-<!-- 题库弹窗 -->
-<div class="modal" id="libModal">
-  <div class="modal-content">
-    <div class="modal-head"><h3>全部题库</h3><span class="close" onclick="closeLib()">×</span></div>
-    <div id="libList"></div>
+<div class="btn-group">
+  <button class="btn" id="prevBtn">上一题</button>
+  <button class="btn" id="nextBtn">下一题</button>
+  <button class="btn btn-ok" id="showAnswerBtn">查看答案</button>
+  <button class="btn" id="addWrongBtn">加入错题本</button>
+  <button class="btn" id="goBankBtn">题库</button>
+  <button class="btn" id="openWrongBtn">错题本</button>
+  <button class="btn btn-gray" id="resetBtn">重新开始</button>
+  <button class="btn btn-warn" id="clearCanvasBtn">清空画板</button>
+  <button class="btn" id="backBtn">返回</button>
+</div>
+
+<div class="card">
+  <div class="py-text" id="pyDom"></div>
+  <div class="explain-text" id="explainDom"></div>
+  <div class="answer-text" id="answerDom"></div>
+  <canvas id="drawCanvas"></canvas>
+</div>
+
+<!-- 错题弹窗 -->
+<div class="wrong-modal" id="wrongModal">
+  <div class="modal-inner">
+    <div class="btn-group">
+      <button class="btn" id="selectAllWrong">全选</button>
+      <button class="btn btn-warn" id="delSelected">删除选中</button>
+      <button class="btn btn-ok" id="startWrongPractice">开始练习错题</button>
+      <button class="btn btn-gray" id="closeWrongModal">关闭</button>
+    </div>
+    <div id="wrongListBox"></div>
   </div>
 </div>
 
-<!-- 错题本弹窗 -->
-<div class="modal" id="wrongModal">
-  <div class="modal-content">
-    <div class="modal-head">
-      <h3>错题本</h3>
-      <div>
-        <button class="btn btn-light" onclick="selectAllWrong()">全选</button>
-        <button class="btn btn-gray" onclick="delSelectedWrong()">删除选中</button>
-        <span class="close" onclick="closeWrongBook()">×</span>
-      </div>
-    </div>
-    <div class="tool-row"><button class="btn mini-del" onclick="clearAllWrong()">清空全部</button></div>
-    <div id="wrongList"></div>
-    <!-- ✅ 就加在这里！上面是 <div id="wrongList"></div>，下面放按钮代码 -->
-    <div style="margin-top:12px"><button class="btn btn-blue" onclick="startWrongPractice()">开始错题练习</button></div>
-  </div>
-</div>
 <script src="wordlib.js?v=2"></script>
 <script>
 const canvas = document.getElementById('drawCanvas');
 const ctx = canvas.getContext('2d');
+
 let wItemList = [];
 let wrongList = [];
 let currentIdx = 0;
-let normalIndex = 0;  
-let mode = "normal";
+let normalIndex = Number(localStorage.getItem("mori_bank_idx")) || 0;
+let wrongIndex = Number(localStorage.getItem("mori_wrong_idx")) || 0;
+let mode = localStorage.getItem("mori_mode") || "normal";
 let isDrawing = false;
 let lastX=0,lastY=0;
 
+const pyDom = document.getElementById("pyDom");
+const explainDom = document.getElementById("explainDom");
+const answerDom = document.getElementById("answerDom");
+const progressText = document.getElementById("progressText");
+const jumpInput = document.getElementById("jumpInput");
+
 function resizeCanvas(){
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = 320;
-  ctx.lineWidth=4;
-  ctx.lineCap="round";
-  ctx.strokeStyle="#222";
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
 }
 resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
+window.addEventListener("resize",resizeCanvas);
 
-canvas.addEventListener('touchstart',e=>{
+// 画板事件
+canvas.addEventListener("touchstart",(e)=>{
   e.preventDefault();
   isDrawing=true;
-  const t=e.touches[0];
-  const r=canvas.getBoundingClientRect();
-  lastX = t.clientX - r.left;
-  lastY = t.clientY - r.top;
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  lastX = t.clientX - rect.left;
+  lastY = t.clientY - rect.top;
 })
-canvas.addEventListener('touchmove',e=>{
-  e.preventDefault();
+canvas.addEventListener("touchmove",(e)=>{
   if(!isDrawing)return;
-  const t=e.touches[0];
-  const r=canvas.getBoundingClientRect();
-  const x = t.clientX - r.left;
-  const y = t.clientY - r.top;
+  e.preventDefault();
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = t.clientX - rect.left;
+  const y = t.clientY - rect.top;
   ctx.beginPath();
   ctx.moveTo(lastX,lastY);
   ctx.lineTo(x,y);
+  ctx.lineWidth=3;
+  ctx.strokeStyle="#222";
+  ctx.lineCap="round";
   ctx.stroke();
   lastX=x;lastY=y;
 })
-canvas.addEventListener('touchend',()=>isDrawing=false);
-function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
-
-const OLD_KEY_IDX = "progress_idx";
-const OLD_KEY_WRONG = "wrong_list";
-const NEW_KEY_IDX = "write_progress_idx";
-const NEW_KEY_WRONG = "write_wrong_list";
-
-function loadLocalData(){
-  let savedIdx = localStorage.getItem(OLD_KEY_IDX);
-  if(savedIdx !== null){
-    currentIdx = parseInt(savedIdx);
-    localStorage.setItem(NEW_KEY_IDX, savedIdx);
-  }else{
-    let nIdx = localStorage.getItem(NEW_KEY_IDX);
-    if(nIdx !== null) currentIdx = parseInt(nIdx);
-  }
-
-  let savedWrong = localStorage.getItem(OLD_KEY_WRONG);
-  if(savedWrong !== null){
-    wrongList = JSON.parse(savedWrong);
-    localStorage.setItem(NEW_KEY_WRONG, savedWrong);
-  }else{
-    let nWrong = localStorage.getItem(NEW_KEY_WRONG);
-    if(nWrong) wrongList = JSON.parse(nWrong);
-  }
+canvas.addEventListener("touchend",()=>isDrawing=false);
+canvas.addEventListener("mousedown",(e)=>{
+  isDrawing=true;
+  const rect = canvas.getBoundingClientRect();
+  lastX = e.clientX - rect.left;
+  lastY = e.clientY - rect.top;
+})
+canvas.addEventListener("mousemove",(e)=>{
+  if(!isDrawing)return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  ctx.beginPath();
+  ctx.moveTo(lastX,lastY);
+  ctx.lineTo(x,y);
+  ctx.lineWidth=3;
+  ctx.strokeStyle="#222";
+  ctx.lineCap="round";
+  ctx.stroke();
+  lastX=x;lastY=y;
+})
+canvas.addEventListener("mouseup",()=>isDrawing=false);
+document.getElementById("clearCanvasBtn").onclick = ()=>{
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 }
+
+// 加载词库
+function loadLib(){
+  if(typeof wordList === "undefined" || !Array.isArray(wordList)){
+    alert("wordlib.js加载失败，请检查文件！");
+    return;
+  }
+  wItemList = [...wordList];
+  let savedWrong = localStorage.getItem("mori_wronglist");
+  if(savedWrong) wrongList = JSON.parse(savedWrong);
+  if(mode === "normal"){
+    currentIdx = normalIndex;
+  }else{
+    currentIdx = wrongIndex;
+  }
+  render();
+}
+
 function saveProgress(){
-  localStorage.setItem(NEW_KEY_IDX, currentIdx.toString());
-  localStorage.setItem(OLD_KEY_IDX, currentIdx.toString());
-}
-function saveWrong(){
-  const str = JSON.stringify(wrongList);
-  localStorage.setItem(NEW_KEY_WRONG, str);
-  localStorage.setItem(OLD_KEY_WRONG, str);
-}
-
-function updateProgressText(){
-  let total = wItemList.length;
-  document.getElementById("progressText").innerText = `总题：${total} ｜ 已完成：${currentIdx}`;
-  document.getElementById("startIdx").value = currentIdx+1;
-}
-
-function refreshWrongBtn(){
-  if(wItemList.length===0) return;
-  const item = wItemList[currentIdx];
-  const has = wrongList.some(x=>x.word===item.word && x.py===item.py);
-  const btn = document.getElementById("wrongBtn");
-  if(has){
-    btn.innerText = "已在错题本";
-    btn.className = "btn btn-gray";
-    btn.onclick = null;
+  if(mode === "normal"){
+    normalIndex = currentIdx;
+    localStorage.setItem("mori_bank_idx", normalIndex);
   }else{
-    btn.innerText = "加入错题本";
-    btn.className = "btn btn-blue";
-    btn.onclick = addWrong;
+    wrongIndex = currentIdx;
+    localStorage.setItem("mori_wrong_idx", wrongIndex);
   }
+  localStorage.setItem("mori_mode", mode);
 }
 
 function render(){
-  if(wItemList.length===0) return;
-  if(currentIdx >= wItemList.length) currentIdx = wItemList.length -1;
-  if(currentIdx <0) currentIdx =0;
-  if(mode === "wrong"){
-    document.getElementById('backBtn').style.display = 'inline-block';
-  }else{
-    document.getElementById('backBtn').style.display = 'none';
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  answerDom.style.display="none";
+  let arr;
+  if(mode === "normal") arr = wItemList;
+  else arr = wrongList;
+  if(arr.length ===0){
+    pyDom.innerText="暂无题目";
+    explainDom.innerText="";
+    answerDom.innerText="";
+    progressText.innerText="总题：0 | 当前：0/0";
+    return;
   }
+  if(currentIdx >= arr.length) currentIdx = arr.length -1;
+  if(currentIdx <0) currentIdx=0;
+  const item = arr[currentIdx];
+  pyDom.innerText = item.py;
+  explainDom.innerText = item.explain;
+  answerDom.innerText = item.word;
+  progressText.innerText = `总题：${arr.length} | 当前：第 ${currentIdx+1} / ${arr.length} 题`;
+  jumpInput.value = currentIdx + 1;
+  saveProgress();
+}
 
-  const item = wItemList[currentIdx];
-  document.getElementById('pinyinBox').innerText = item.py;
-  document.getElementById('explainBox').innerText = item.explain;
-  document.getElementById('ansWord').innerText = item.word;
-  document.getElementById('answerBox').style.display="none";
-  clearCanvas();
-  refreshWrongBtn();
-  
+// 切换模式
+function switchNormal(){
+  if(mode === "wrong"){
+    wrongIndex = currentIdx;
+    localStorage.setItem("mori_wrong_idx", wrongIndex);
+  }
+  mode = "normal";
+  currentIdx = normalIndex;
+  render();
+}
+function switchWrongPractice(){
   if(mode === "normal"){
     normalIndex = currentIdx;
-    localStorage.setItem("normalIndex", normalIndex);
-  }
-  updateProgressText();
-}
-
-function setNormalMode(){
-  mode="normal";
-  if(typeof wordList !== "undefined"){
-    wItemList = wordList;
-  }else if(typeof wordLib !== "undefined"){
-    wItemList = wordLib;
-  }else{
-    alert("❌ 词库加载失败！检查wordlib.js");
-    wItemList = [];
-    return;
-  }
-  render();
-}
-function setWrongMode(){
-  mode="wrong";
-  wItemList = wrongList;
-  currentIdx=0;
-  render();
-}
-
-function prevItem(){
-  if(currentIdx>0){
-    currentIdx--;
-    saveProgress();
-    render();
-  }
-}
-function nextItem(){
-  if(currentIdx < wItemList.length-1){
-    currentIdx++;
-    saveProgress();
-    render();
-  }
-}
-function showAnswer(){
-  document.getElementById('answerBox').style.display="block";
-}
-function backToNormal(){
-  setNormalMode();
-}
-
-function addWrong(){
-  const item = wItemList[currentIdx];
-  const has = wrongList.some(x=>x.word===item.word && x.py===item.py);
-  if(!has){
-    wrongList.push(item);
-    saveWrong();
-    alert("✅ 已加入错题本");
-    refreshWrongBtn();
-  }
-}
-
-function resetAll(){
-  if(confirm("确定要重新开始？进度回到第一题")){
-    currentIdx=0;
-    saveProgress();
-    render();
-  }
-}
-
-function openLib(){
-  const dom = document.getElementById("libList");
-  dom.innerHTML="";
-  wItemList.forEach((it,i)=>{
-    dom.innerHTML += `<div class="item"><input type="checkbox" data-idx="${i}"> ${it.py} 【${it.word}】 ${it.explain}</div>`
-  })
-  document.getElementById("libModal").style.display="flex";
-}
-function closeLib(){document.getElementById("libModal").style.display="none";}
-
-function openWrongBook(){
-  const dom = document.getElementById("wrongList");
-  dom.innerHTML="";
-  wrongList.forEach((it,i)=>{
-    dom.innerHTML += `<div class="item check-row">
-      <input type="checkbox" class="wrong-check" data-widx="${i}">
-      ${it.py} 【${it.word}】 ${it.explain}
-      <button class="btn btn-gray" onclick="delOneWrong(${i})">删除</button>
-    </div>`
-  })
-  document.getElementById("wrongModal").style.display="flex";
-}
-function closeWrongBook(){document.getElementById("wrongModal").style.display="none";}
-function selectAllWrong(){
-  document.querySelectorAll('.wrong-check').forEach(cb=>cb.checked=true);
-}
-function delSelectedWrong(){
-  const cbs = document.querySelectorAll('.wrong-check:checked');
-  const delIdx = Array.from(cbs).map(x=>parseInt(x.dataset.widx)).sort((a,b)=>b-a);
-  delIdx.forEach(i=>wrongList.splice(i,1));
-  saveWrong();
-  openWrongBook();
-  refreshWrongBtn();
-}
-function delOneWrong(i){
-  wrongList.splice(i,1);
-  saveWrong();
-  openWrongBook();
-  refreshWrongBtn();
-}
-
-window.onload = function(){
-  loadLocalData();
-  setNormalMode();
-}
-function startWrongPractice(){
-  if(wrongList.length === 0){
-    alert("错题本是空的");
-    return;
+    localStorage.setItem("mori_bank_idx", normalIndex);
   }
   mode = "wrong";
-  wItemList = [...wrongList];
-  currentIdx = 0;
-  closeWrongBook();
+  currentIdx = wrongIndex;
+  document.getElementById("wrongModal").style.display="none";
   render();
 }
-function backToNormal(){
-  mode = "normal";
-  wItemList = [...wordList];
-  currentIdx = normalIndex; // 读取之前保存的进度
+
+// 上一题 下一题
+document.getElementById("prevBtn").onclick = ()=>{
+  currentIdx--;
   render();
 }
-function jumpToItem(){
-  const num = Number(document.getElementById("startIdx").value);
-  alert("mode="+mode+"，输入="+num);
-  if(mode === "normal"){
-    currentIdx = num - 1;
-    alert("题库模式，新下标："+currentIdx);
-  }else if(mode === "wrong"){
-    curErrIdx = num - 1;
-    alert("错题模式，新下标："+curErrIdx);
-  }else{
-    alert("模式不支持");
+document.getElementById("nextBtn").onclick = ()=>{
+  currentIdx++;
+  render();
+}
+document.getElementById("showAnswerBtn").onclick = ()=>{
+  answerDom.style.display = answerDom.style.display === "none" ? "block":"none";
+}
+
+// 加入错题本
+document.getElementById("addWrongBtn").onclick = ()=>{
+  if(mode !== "normal"){
+    alert("只能在题库模式添加错题！");
     return;
   }
+  const item = wItemList[currentIdx];
+  const has = wrongList.some(x=>x.py===item.py && x.word===item.word);
+  if(has){
+    alert("该词语已经在错题本中！");
+    return;
+  }
+  wrongList.push(item);
+  localStorage.setItem("mori_wronglist", JSON.stringify(wrongList));
+  alert("已加入错题本");
+}
+
+document.getElementById("goBankBtn").onclick = switchNormal;
+document.getElementById("backBtn").onclick = switchNormal;
+
+// 错题弹窗
+const wrongModal = document.getElementById("wrongModal");
+document.getElementById("openWrongBtn").onclick = ()=>{
+  renderWrongListBox();
+  wrongModal.style.display="block";
+}
+document.getElementById("closeWrongModal").onclick = ()=>{
+  wrongModal.style.display="none";
+}
+document.getElementById("startWrongPractice").onclick = switchWrongPractice;
+
+function renderWrongListBox(){
+  const box = document.getElementById("wrongListBox");
+  box.innerHTML = "";
+  wrongList.forEach((it,idx)=>{
+    const div = document.createElement("div");
+    div.className="wrong-item";
+    div.innerHTML = `
+      <input type="checkbox" class="wrong-check" data-idx="${idx}">
+      <span>${it.py} — ${it.word}（${it.explain}）</span>
+      <button class="btn btn-warn del-one" data-idx="${idx}">删除</button>
+    `
+    box.appendChild(div);
+  })
+  // 单个删除
+  document.querySelectorAll(".del-one").forEach(btn=>{
+    btn.onclick = function(){
+      const i = Number(this.dataset.idx);
+      wrongList.splice(i,1);
+      localStorage.setItem("mori_wronglist", JSON.stringify(wrongList));
+      renderWrongListBox();
+    }
+  })
+}
+//全选
+document.getElementById("selectAllWrong").onclick = ()=>{
+  const checks = document.querySelectorAll(".wrong-check");
+  const all = [...checks].every(c=>c.checked);
+  checks.forEach(c=>c.checked = !all);
+}
+//删除选中
+document.getElementById("delSelected").onclick = ()=>{
+  const checks = [...document.querySelectorAll(".wrong-check")].filter(c=>c.checked);
+  const delIdx = checks.map(c=>Number(c.dataset.idx)).sort((a,b)=>b-a);
+  delIdx.forEach(i=>wrongList.splice(i,1));
+  localStorage.setItem("mori_wronglist", JSON.stringify(wrongList));
+  renderWrongListBox();
+}
+
+//重新开始（当前模式归零）
+document.getElementById("resetBtn").onclick = ()=>{
+  if(confirm("确定当前模式从头开始？")){
+    currentIdx = 0;
+    if(mode==="normal") normalIndex=0;
+    else wrongIndex=0;
+    render();
+  }
+}
+
+//跳转题号
+document.getElementById("jumpBtn").onclick = ()=>{
+  const val = Number(jumpInput.value);
+  let arr = mode==="normal"?wItemList:wrongList;
+  if(isNaN(val) || val<1 || val>arr.length){
+    alert(`范围：1 ~ ${arr.length}`);
+    return;
+  }
+  currentIdx = val - 1;
   render();
 }
- 
+
+loadLib();
 </script>
 </body>
 </html>

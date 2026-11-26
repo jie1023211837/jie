@@ -259,13 +259,13 @@ function render(){
   document.getElementById('ansWord').innerText = item.word;
   document.getElementById('answerBox').style.display="none";
   clearCanvas();
-  updateProgressText();
   refreshWrongBtn();
   
   if(mode === "normal"){
     normalIndex = currentIdx;
     localStorage.setItem("normalIndex", normalIndex);
   }
+  updateProgressText();
 }
 
 function setNormalMode(){
